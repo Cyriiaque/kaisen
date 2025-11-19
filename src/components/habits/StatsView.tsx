@@ -180,7 +180,7 @@ export function StatsView({ habits }: StatsViewProps) {
             />
             <YAxis hide />
             <Bar dataKey="completed" radius={[8, 8, 0, 0]}>
-              {stats.weeklyData.map((entry, index) => {
+              {stats.weeklyData.map((entry) => {
                 const isToday =
                   entry.date === new Date().toISOString().split("T")[0];
                 return (

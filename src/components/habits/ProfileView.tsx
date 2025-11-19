@@ -3,7 +3,6 @@
 import { motion } from "motion/react";
 import { useState, useEffect, useActionState } from "react";
 import { User, Moon, Sun, Bell, LogOut, Trash2, AlertTriangle } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
