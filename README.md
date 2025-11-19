@@ -1,3 +1,20 @@
+## Environment setup
+
+Create a `.env` file in the project root based on this template:
+
+```env
+# Prisma with PostgreSQL
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DBNAME?schema=public"
+DIRECT_URL="postgresql://USER:PASSWORD@HOST:5432/DBNAME?schema=public"
+```
+
+Then run:
+
+```bash
+pnpm db:generate
+pnpm db:migrate
+```
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

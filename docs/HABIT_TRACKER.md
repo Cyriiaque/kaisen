@@ -8,7 +8,7 @@ Application mobile-first de suivi d'habitudes axée sur la constance, la simplic
 
 - **Next.js 15 (App Router)**: front + back (routes/app, actions serveur)
 - **TypeScript**: typage statique
-- **Prisma**: ORM – base de départ SQLite (dev), extensible à Postgres
+- **Prisma**: ORM – base PostgreSQL (prod & dev)
 - **Tailwind CSS v4**: design system en tokens et utilitaires
 - **shadcn/ui**: composants UI (boutons, inputs, etc.)
 
@@ -21,7 +21,7 @@ Application mobile-first de suivi d'habitudes axée sur la constance, la simplic
 
 - Installer les dépendances: `pnpm install`
 - Variables d'environnement: `.env`
-  - `DATABASE_URL="file:./prisma/dev.db"`
+  - `DATABASE_URL` / `DIRECT_URL` (PostgreSQL)
 - Prisma
   - Migrations: `pnpm exec prisma migrate dev`
   - Générer le client: `pnpm exec prisma generate`
@@ -165,8 +165,8 @@ model Notification {
 ## Routes & UX (mobile)
 
 - Auth: `/signup`, `/login`, `/logout`
-- Application: `/app` (home), `/app/habits`, `/app/habits/[id]`, `/app/stats`, `/app/calendar`, `/app/social`
-- Profil: `/app/profile`
+- Application: `/` (home), `/habits`, `/habits/[id]`, `/stats`, `/calendar`, `/social`
+- Profil: `/profile`
 - Motifs UI: navigation bottom bar (mobile), formulaires gros touch targets, skeletons, transitions
 
 ## Composants UI (shadcn/ui)

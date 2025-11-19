@@ -7,8 +7,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -20,6 +21,14 @@ model User {
   updatedAt DateTime @updatedAt
 
   sessions  Session[]
+  habits    Habit[]
+  followers Follow[] @relation("followers")
+  following Follow[] @relation("following")
+  friendshipsA Friendship[] @relation("friendA")
+  friendshipsB Friendship[] @relation("friendB")
+  messagesSent Message[] @relation("sender")
+  messagesRecv Message[] @relation("recipient")
+  notifications Notification[]
 }
 
 model Session {
@@ -29,4 +38,95 @@ model Session {
   userId    String
   createdAt DateTime @default(now())
   expiresAt DateTime
+}
+
+model Category {
+  id    String  @id @default(cuid())
+  name  String  @unique
+  color String
+  habits Habit[]
+}
+
+enum Frequency {
+  DAILY
+  WEEKLY
+  CUSTOM
+}
+
+model Habit {
+  id          String     @id @default(cuid())
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  name        String
+  description String?
+  color       String
+  frequency   Frequency
+  activeDays  String?    // ex: "[1,2,3,4,5]" pour Lun-Ven (JSON array)
+  category    Category?  @relation(fields: [categoryId], references: [id])
+  categoryId  String?
+  reminders   Reminder[]
+  logs        HabitLog[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Reminder {
+  id       String   @id @default(cuid())
+  habit    Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  habitId  String
+  atTime   String   // HH:mm (24h)
+  timezone String   // IANA TZ id
+}
+
+model HabitLog {
+  id       String   @id @default(cuid())
+  habit    Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  habitId  String
+  date     DateTime // stocké à minuit UTC
+  done     Boolean  @default(false)
+
+  @@unique([habitId, date])
+}
+
+model Follow {
+  id         String @id @default(cuid())
+  follower   User   @relation("following", fields: [followerId], references: [id], onDelete: Cascade)
+  followerId String
+  followed   User   @relation("followers", fields: [followedId], references: [id], onDelete: Cascade)
+  followedId String
+  createdAt  DateTime @default(now())
+
+  @@unique([followerId, followedId])
+}
+
+model Friendship {
+  id      String @id @default(cuid())
+  friendA User   @relation("friendA", fields: [friendAId], references: [id], onDelete: Cascade)
+  friendAId String
+  friendB User   @relation("friendB", fields: [friendBId], references: [id], onDelete: Cascade)
+  friendBId String
+  status  String // pending | accepted | blocked
+  createdAt DateTime @default(now())
+
+  @@unique([friendAId, friendBId])
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  sender      User     @relation("sender", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId    String
+  recipient   User     @relation("recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  recipientId String
+  content     String
+  createdAt   DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  type      String   // reminder | friend_activity | social
+  payload   String   // JSON
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
 }

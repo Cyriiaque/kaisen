@@ -1,19 +1,81 @@
 "use server";
 
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+
+import { prisma } from "@/lib/prisma";
+
+const SESSION_COOKIE_NAME = "kaisen_session";
 
 const signupSchema = z.object({
-  name: z.string().trim().min(1).optional(),
+  name: z.string().trim().min(1),
   email: z.string().email(),
   password: z.string().min(6),
 });
 
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+});
+
+async function createSession(userId: string) {
+  const token = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30); // 30 jours
+
+  // On supprime les anciennes sessions de cet utilisateur pour simplifier
+  await prisma.session.deleteMany({ where: { userId } });
+
+  await prisma.session.create({
+    data: {
+      token,
+      userId,
+      expiresAt,
+    },
+  });
+
+  const cookieStore = await cookies();
+  cookieStore.set(SESSION_COOKIE_NAME, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    expires: expiresAt,
+  });
+}
+
+export async function getCurrentUser() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  if (!token) return null;
+
+  const session = await prisma.session.findUnique({
+    where: { token },
+    include: { user: true },
+  });
+
+  if (!session) {
+    return null;
+  }
+
+  if (session.expiresAt < new Date()) {
+    // Session expirée: nettoyage
+    await prisma.session.delete({ where: { id: session.id } });
+    cookieStore.delete(SESSION_COOKIE_NAME);
+    return null;
+  }
+
+  return {
+    id: session.user.id,
+    email: session.user.email,
+    name: session.user.name,
+  };
+}
+
 export async function registerAction(_: unknown, formData: FormData) {
   const parsed = signupSchema.safeParse({
-    name: formData.get("name")?.toString() ?? undefined,
+    name: formData.get("name")?.toString() ?? "",
     email: formData.get("email")?.toString() ?? "",
     password: formData.get("password")?.toString() ?? "",
   });
@@ -35,11 +97,6 @@ export async function registerAction(_: unknown, formData: FormData) {
   redirect("/login?registered=1");
 }
 
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-});
-
 export async function loginAction(_: unknown, formData: FormData) {
   const parsed = loginSchema.safeParse({
     email: formData.get("email")?.toString() ?? "",
@@ -55,8 +112,69 @@ export async function loginAction(_: unknown, formData: FormData) {
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) return { error: "Invalid credentials" };
 
-  // TODO: create session/cookie. For now, just redirect to home.
+  await createSession(user.id);
+
   redirect("/");
 }
 
+export async function logoutAction() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+
+  if (token) {
+    await prisma.session.deleteMany({ where: { token } });
+    cookieStore.delete(SESSION_COOKIE_NAME);
+  }
+
+  redirect("/login");
+}
+
+const deleteAccountSchema = z.object({
+  password: z.string().min(1, "Le mot de passe est requis"),
+});
+
+export async function deleteAccount(_: unknown, formData: FormData) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return { error: "Non authentifié" };
+  }
+
+  const parsed = deleteAccountSchema.safeParse({
+    password: formData.get("password")?.toString() ?? "",
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message || "Données invalides" };
+  }
+
+  const { password } = parsed.data;
+
+  // Récupérer l'utilisateur avec le mot de passe hashé
+  const userWithPassword = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { id: true, passwordHash: true },
+  });
+
+  if (!userWithPassword) {
+    return { error: "Utilisateur introuvable" };
+  }
+
+  // Vérifier le mot de passe
+  const valid = await bcrypt.compare(password, userWithPassword.passwordHash);
+  if (!valid) {
+    return { error: "Mot de passe incorrect" };
+  }
+
+  // Supprimer toutes les sessions de l'utilisateur
+  const cookieStore = await cookies();
+  await prisma.session.deleteMany({ where: { userId: user.id } });
+  cookieStore.delete(SESSION_COOKIE_NAME);
+
+  // Supprimer l'utilisateur (cascade supprimera automatiquement habitudes, logs, relations, etc.)
+  await prisma.user.delete({
+    where: { id: user.id },
+  });
+
+  redirect("/login?deleted=1");
+}
 
