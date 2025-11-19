@@ -3,15 +3,7 @@
 import { Logo } from "@/components/habits/Logo";
 import { useEffect, useState } from "react";
 
-interface AppHeaderProps {
-  user: {
-    id: string;
-    email: string;
-    name: string | null;
-  };
-}
-
-export function AppHeader({ user }: AppHeaderProps) {
+export function AppHeader() {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {

@@ -185,8 +185,7 @@ export function StatsView({ habits }: StatsViewProps) {
                   entry.date === new Date().toISOString().split("T")[0];
                 return (
                   <Cell
-                    // eslint-disable-next-line react/no-array-index-key
-                    key={`cell-${index}`}
+                    key={`cell-${entry.date}`}
                     fill={
                       isToday
                         ? "url(#gradientToday)"

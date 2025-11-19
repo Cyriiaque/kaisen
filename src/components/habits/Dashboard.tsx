@@ -19,7 +19,7 @@ interface DashboardProps {
 
 export function Dashboard({ habits }: DashboardProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showHabitForm, setShowHabitForm] = useState(false);
@@ -243,7 +243,7 @@ export function Dashboard({ habits }: DashboardProps) {
         {showHabitForm && (
           <HabitForm
             habit={editingHabit}
-            onSave={async (habitData) => {
+            onSave={() => {
               // Cette fonction sera gérée par HabitForm avec les actions serveur
               handleCloseForm();
               router.refresh();

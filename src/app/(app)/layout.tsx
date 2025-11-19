@@ -16,7 +16,7 @@ export default async function AppLayout({
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-lg mx-auto min-h-screen">
-        <AppHeader user={user} />
+        <AppHeader />
         <div className="px-6 py-6 pb-24">{children}</div>
         <BottomNav />
       </div>

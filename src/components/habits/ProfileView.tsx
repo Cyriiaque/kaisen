@@ -32,7 +32,6 @@ interface ProfileViewProps {
 }
 
 export function ProfileView({ user }: ProfileViewProps) {
-  const router = useRouter();
   const [isDark, setIsDark] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [state, formAction, pending] = useActionState(deleteAccount, null);
@@ -55,7 +54,8 @@ export function ProfileView({ user }: ProfileViewProps) {
 
   useEffect(() => {
     // Fermer le dialog si la suppression réussit (redirection)
-    if (state?.success) {
+    // Si pas d'erreur, la redirection va se produire
+    if (state && !state.error) {
       setOpenDeleteDialog(false);
     }
   }, [state]);
@@ -64,9 +64,6 @@ export function ProfileView({ user }: ProfileViewProps) {
     setIsDark(!isDark);
   };
 
-  const handleLogout = async () => {
-    await logoutAction();
-  };
   return (
     <div className="pb-24">
       {/* Header */}

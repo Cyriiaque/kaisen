@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useActionState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { motion } from "motion/react";
 import { X, Check } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import type { Habit } from "@/components/habits/types";
@@ -83,14 +82,7 @@ export function HabitForm({ habit, onSave, onClose, onDelete }: HabitFormProps) 
     );
   };
 
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [createState, createAction] = useActionState(createHabit, null);
-  const [updateState, updateAction] = useActionState(
-    (prev: unknown, formData: FormData) =>
-      updateHabit(habit!.id, prev, formData),
-    null,
-  );
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -106,7 +98,7 @@ export function HabitForm({ habit, onSave, onClose, onDelete }: HabitFormProps) 
 
     startTransition(async () => {
       if (habit) {
-        const result = await updateAction(null, formData);
+        const result = await updateHabit(habit.id, null, formData);
         if (result?.error) {
           toast.error(result.error);
         } else {
@@ -114,7 +106,7 @@ export function HabitForm({ habit, onSave, onClose, onDelete }: HabitFormProps) 
           onSave();
         }
       } else {
-        const result = await createAction(null, formData);
+        const result = await createHabit(null, formData);
         if (result?.error) {
           toast.error(result.error);
         } else {
