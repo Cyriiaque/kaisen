@@ -94,23 +94,27 @@ export async function updateCategory(
 }
 
 export async function deleteCategory(id: string) {
-  // Détacher les habitudes de cette catégorie avant suppression
-  await prisma.$transaction([
-    prisma.habit.updateMany({
-      where: { categoryId: id },
-      data: { categoryId: null },
-    }),
-    prisma.category.delete({
-      where: { id },
-    }),
-  ]);
+  try {
+    // Détacher les habitudes de cette catégorie avant suppression
+    await prisma.$transaction([
+      prisma.habit.updateMany({
+        where: { categoryId: id },
+        data: { categoryId: null },
+      }),
+      prisma.category.delete({
+        where: { id },
+      }),
+    ]);
 
-  revalidatePath("/habits");
-  revalidatePath("/");
-  revalidatePath("/stats");
-  revalidatePath("/calendar");
+    revalidatePath("/habits");
+    revalidatePath("/");
+    revalidatePath("/stats");
+    revalidatePath("/calendar");
 
-  return { success: true };
+    return { success: true };
+  } catch (error) {
+    return { error: "Impossible de supprimer cette catégorie" };
+  }
 }
 
 
