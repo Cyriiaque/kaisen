@@ -57,7 +57,8 @@ export async function createHabit(_: unknown, formData: FormData) {
     } catch {
       return { error: "Format des jours actifs invalide" };
     }
-  } else if (frequency !== "DAILY") {
+  } else {
+    // Si ce n'est pas DAILY et qu'aucun activeDays n'est fourni
     return { error: "Au moins un jour doit être sélectionné" };
   }
 
@@ -166,7 +167,8 @@ export async function updateHabit(
     } catch {
       return { error: "Format des jours actifs invalide" };
     }
-  } else if (frequency !== "DAILY") {
+  } else {
+    // Si ce n'est pas DAILY et qu'aucun activeDays n'est fourni
     return { error: "Au moins un jour doit être sélectionné" };
   }
 
