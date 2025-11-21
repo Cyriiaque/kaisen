@@ -192,9 +192,7 @@ const updateProfileSchema = z.object({
       "URL d'avatar invalide",
     )
     .optional(),
-  theme: z.enum(["light", "dark"], {
-    errorMap: () => ({ message: "Le thème doit être 'light' ou 'dark'" }),
-  }),
+  theme: z.enum(["light", "dark"]),
   notificationsEnabled: z.boolean(),
 });
 
