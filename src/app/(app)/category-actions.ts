@@ -7,15 +7,16 @@ import { prisma } from "@/lib/prisma";
 
 const CategorySchema = z.object({
   name: z.string().min(1, "Le nom de la catégorie est requis"),
-  color: z
-    .enum(
-      ["purple", "pink", "blue", "green", "orange", "teal", "red", "yellow"],
-      {
-        errorMap: () => ({
-          message: "Couleur invalide",
-        }),
-      },
-    ),
+  color: z.enum([
+    "purple",
+    "pink",
+    "blue",
+    "green",
+    "orange",
+    "teal",
+    "red",
+    "yellow",
+  ]),
 });
 
 export async function createCategory(_: unknown, formData: FormData) {

@@ -10,11 +10,7 @@ import { getCurrentUser } from "@/app/auth-actions";
 const HabitSchema = z.object({
   name: z.string().min(1, "Le nom de l'habitude est requis"),
   description: z.string().optional(),
-  frequency: z.enum(["DAILY", "WEEKLY", "CUSTOM"], {
-    errorMap: () => ({
-      message: "La fréquence doit être DAILY, WEEKLY ou CUSTOM",
-    }),
-  }),
+  frequency: z.enum(["DAILY", "WEEKLY", "CUSTOM"]),
   activeDays: z.string().optional(), // JSON array string
   categoryName: z.string().optional(),
   time: z.string().optional(), // HH:mm format
