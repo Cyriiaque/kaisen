@@ -238,7 +238,15 @@ export function StatsView({ habits }: StatsViewProps) {
         let total = 0;
         
         const currentDate = new Date(month.start);
-        const endDate = new Date(Math.min(month.end.getTime(), todayDateObj.getTime()));
+        currentDate.setUTCHours(0, 0, 0, 0);
+        // Pour le mois actuel, aller jusqu'à aujourd'hui inclus, sinon jusqu'à la fin du mois
+        const isCurrentMonth = 
+          month.start.getMonth() === todayDateObj.getMonth() &&
+          month.start.getFullYear() === todayDateObj.getFullYear();
+        const endDate = isCurrentMonth 
+          ? new Date(todayDateObj)
+          : new Date(month.end);
+        endDate.setUTCHours(0, 0, 0, 0);
         
         while (currentDate <= endDate) {
           const dateStr = currentDate.toISOString().split("T")[0];
@@ -380,7 +388,10 @@ export function StatsView({ habits }: StatsViewProps) {
                   border: "1px solid var(--border)",
                   borderRadius: "8px",
                 }}
-                formatter={(value: number) => [value, "Complétées"]}
+                formatter={(value: number, _: unknown, props: { payload?: { total?: number } }) => {
+                  const total = props.payload?.total || 0;
+                  return [`${value} / ${total}`, "Complétées"];
+                }}
               />
               <Line
                 type="monotone"
@@ -403,10 +414,10 @@ export function StatsView({ habits }: StatsViewProps) {
                 dataKey="label"
                 axisLine={false}
                 tickLine={false}
-                tick={(props: any) => {
+                tick={(props: { x?: number; y?: number; payload?: { value?: string } }) => {
                   const { x, y, payload } = props;
                   const data = stats.chartData.find(
-                    (d) => d.label === payload.value,
+                    (d) => d.label === payload?.value,
                   );
                   return (
                     <g transform={`translate(${x},${y})`}>
@@ -418,7 +429,7 @@ export function StatsView({ habits }: StatsViewProps) {
                         fill="var(--muted-foreground)"
                         fontSize={12}
                       >
-                        {payload.value}
+                        {payload?.value}
                       </text>
                       {period === "week" && (
                         <text

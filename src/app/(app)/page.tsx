@@ -98,7 +98,7 @@ async function DashboardContent() {
       completedDates,
       createdAt: habit.createdAt.toISOString(),
       reminderTime: habit.reminders[0]?.atTime || undefined,
-      duration: (habit as any).duration || undefined,
+      duration: (habit as { duration?: string | null }).duration || undefined,
     };
   });
 
