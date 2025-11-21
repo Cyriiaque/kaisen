@@ -4,6 +4,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
 
@@ -70,6 +71,9 @@ export async function getCurrentUser() {
     id: session.user.id,
     email: session.user.email,
     name: session.user.name,
+    avatar: session.user.avatar,
+    theme: session.user.theme || "light",
+    notificationsEnabled: session.user.notificationsEnabled ?? true,
   };
 }
 
@@ -176,5 +180,68 @@ export async function deleteAccount(_: unknown, formData: FormData) {
   });
 
   redirect("/login?deleted=1");
+}
+
+const updateProfileSchema = z.object({
+  name: z.string().trim().min(1, "Le nom est requis"),
+  email: z.string().email("Email invalide"),
+  avatar: z
+    .string()
+    .refine(
+      (val) => !val || val === "" || z.string().url().safeParse(val).success,
+      "URL d'avatar invalide",
+    )
+    .optional(),
+  theme: z.enum(["light", "dark"], {
+    errorMap: () => ({ message: "Le thème doit être 'light' ou 'dark'" }),
+  }),
+  notificationsEnabled: z.boolean(),
+});
+
+export async function updateProfile(_: unknown, formData: FormData) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return { error: "Non authentifié" };
+  }
+
+  const avatarValue = formData.get("avatar")?.toString() ?? "";
+  const parsed = updateProfileSchema.safeParse({
+    name: formData.get("name")?.toString() ?? "",
+    email: formData.get("email")?.toString() ?? "",
+    avatar: avatarValue === "" ? undefined : avatarValue,
+    theme: formData.get("theme")?.toString() ?? "light",
+    notificationsEnabled: formData.get("notificationsEnabled") === "true",
+  });
+
+  if (!parsed.success) {
+    return {
+      error: parsed.error.issues[0]?.message || "Données invalides",
+    };
+  }
+
+  const { name, email, avatar, theme, notificationsEnabled } = parsed.data;
+
+  // Vérifier si l'email est déjà utilisé par un autre utilisateur
+  if (email !== user.email) {
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      return { error: "Cet email est déjà utilisé" };
+    }
+  }
+
+  // Mettre à jour le profil
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      name,
+      email,
+      avatar: avatar || null,
+      theme,
+      notificationsEnabled,
+    },
+  });
+
+  revalidatePath("/profile");
+  return { success: true };
 }
 

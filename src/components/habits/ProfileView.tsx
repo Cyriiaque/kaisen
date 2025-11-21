@@ -2,7 +2,8 @@
 
 import { motion } from "motion/react";
 import { useState, useEffect, useActionState } from "react";
-import { User, Moon, Sun, Bell, LogOut, Trash2, AlertTriangle } from "lucide-react";
+import { User, Moon, Sun, Bell, LogOut, Trash2, AlertTriangle, Edit2, X, Check } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -20,29 +21,44 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { ImageWithFallback } from "@/components/habits/ImageWithFallback";
-import { logoutAction, deleteAccount } from "@/app/auth-actions";
+import { logoutAction, deleteAccount, updateProfile } from "@/app/auth-actions";
 
 interface ProfileViewProps {
   user: {
     name: string;
     email: string;
     avatar?: string;
+    theme?: string;
+    notificationsEnabled?: boolean;
   };
 }
 
 export function ProfileView({ user }: ProfileViewProps) {
-  const [isDark, setIsDark] = useState(false);
+  const router = useRouter();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isDark, setIsDark] = useState(user.theme === "dark");
+  const [notificationsEnabled, setNotificationsEnabled] = useState(
+    user.notificationsEnabled ?? true
+  );
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [state, formAction, pending] = useActionState(deleteAccount, null);
+  const [deleteState, deleteFormAction, deletePending] = useActionState(deleteAccount, null);
+  const [updateState, updateFormAction, updatePending] = useActionState(updateProfile, null);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    name: user.name || "",
+    email: user.email || "",
+    avatar: user.avatar || "",
+  });
 
   useEffect(() => {
-    const savedTheme = window.localStorage.getItem("kaisen_theme");
-    if (savedTheme === "dark") {
-      setIsDark(true);
-    }
-  }, []);
+    // Initialiser le thème depuis la DB ou localStorage
+    const savedTheme = user.theme || window.localStorage.getItem("kaisen_theme") || "light";
+    setIsDark(savedTheme === "dark");
+  }, [user.theme]);
 
   useEffect(() => {
+    // Appliquer le thème au document
     if (isDark) {
       document.documentElement.classList.add("dark");
     } else {
@@ -53,14 +69,52 @@ export function ProfileView({ user }: ProfileViewProps) {
 
   useEffect(() => {
     // Fermer le dialog si la suppression réussit (redirection)
-    // Si pas d'erreur, la redirection va se produire
-    if (state && !state.error) {
+    if (deleteState && !deleteState.error) {
       setOpenDeleteDialog(false);
     }
-  }, [state]);
+  }, [deleteState]);
 
-  const handleToggleTheme = () => {
-    setIsDark(!isDark);
+  useEffect(() => {
+    // Si la mise à jour réussit, recharger la page
+    if (updateState?.success) {
+      router.refresh();
+      setIsEditing(false);
+    }
+  }, [updateState, router]);
+
+  const handleToggleTheme = async (checked: boolean) => {
+    setIsDark(checked);
+    // Sauvegarder immédiatement le thème
+    const updateFormData = new FormData();
+    updateFormData.append("name", formData.name || user.name || "");
+    updateFormData.append("email", formData.email || user.email || "");
+    updateFormData.append("avatar", formData.avatar || user.avatar || "");
+    updateFormData.append("theme", checked ? "dark" : "light");
+    updateFormData.append("notificationsEnabled", String(notificationsEnabled));
+    await updateProfile(null, updateFormData);
+    router.refresh();
+  };
+
+  const handleToggleNotifications = async (checked: boolean) => {
+    setNotificationsEnabled(checked);
+    // Sauvegarder immédiatement les notifications
+    const updateFormData = new FormData();
+    updateFormData.append("name", formData.name || user.name || "");
+    updateFormData.append("email", formData.email || user.email || "");
+    updateFormData.append("avatar", formData.avatar || user.avatar || "");
+    updateFormData.append("theme", isDark ? "dark" : "light");
+    updateFormData.append("notificationsEnabled", String(checked));
+    await updateProfile(null, updateFormData);
+    router.refresh();
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setFormData({
+      name: user.name || "",
+      email: user.email || "",
+      avatar: user.avatar || "",
+    });
   };
 
   return (
@@ -80,14 +134,24 @@ export function ProfileView({ user }: ProfileViewProps) {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.1 }}
-        className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl p-6 mb-6 text-white shadow-lg"
+        className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl p-6 mb-6 text-white shadow-lg relative"
       >
+        {!isEditing && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 right-4 text-white hover:bg-white/20"
+            onClick={() => setIsEditing(true)}
+          >
+            <Edit2 className="w-5 h-5" />
+          </Button>
+        )}
         <div className="flex items-center gap-4">
           <div className="w-20 h-20 rounded-2xl overflow-hidden bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            {user.avatar ? (
+            {formData.avatar || user.avatar ? (
               <ImageWithFallback
-                src={user.avatar}
-                alt={user.name}
+                src={formData.avatar || user.avatar || ""}
+                alt={formData.name || user.name}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -95,10 +159,84 @@ export function ProfileView({ user }: ProfileViewProps) {
             )}
           </div>
           <div className="flex-1">
-            <h2 className="text-white mb-1">{user.name}</h2>
-            <p className="text-white/80 text-sm">{user.email}</p>
+            {isEditing ? (
+              <div className="space-y-2">
+                <Input
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="bg-white/20 border-white/30 text-white placeholder:text-white/60 rounded-xl h-10"
+                  placeholder="Nom"
+                />
+                <Input
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  type="email"
+                  className="bg-white/20 border-white/30 text-white placeholder:text-white/60 rounded-xl h-10"
+                  placeholder="Email"
+                />
+              </div>
+            ) : (
+              <>
+                <h2 className="text-white mb-1">{user.name}</h2>
+                <p className="text-white/80 text-sm">{user.email}</p>
+              </>
+            )}
           </div>
         </div>
+        {isEditing && (
+          <div className="mt-4 space-y-2">
+            <Label htmlFor="avatar" className="text-white/90 text-sm">
+              URL de l&apos;avatar (optionnel)
+            </Label>
+            <Input
+              id="avatar"
+              value={formData.avatar}
+              onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
+              className="bg-white/20 border-white/30 text-white placeholder:text-white/60 rounded-xl h-10"
+              placeholder="https://example.com/avatar.jpg"
+            />
+            <div className="flex gap-2 mt-3">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 bg-white/20 border-white/30 text-white hover:bg-white/30"
+                onClick={handleCancelEdit}
+              >
+                <X className="w-4 h-4 mr-2" />
+                Annuler
+              </Button>
+              <form action={updateFormAction} className="flex-1">
+                <input type="hidden" name="name" value={formData.name} />
+                <input type="hidden" name="email" value={formData.email} />
+                <input type="hidden" name="avatar" value={formData.avatar} />
+                <input type="hidden" name="theme" value={isDark ? "dark" : "light"} />
+                <input
+                  type="hidden"
+                  name="notificationsEnabled"
+                  value={String(notificationsEnabled)}
+                />
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="w-full bg-white text-purple-600 hover:bg-white/90"
+                  disabled={updatePending}
+                >
+                  <Check className="w-4 h-4 mr-2" />
+                  {updatePending ? "Enregistrement..." : "Enregistrer"}
+                </Button>
+              </form>
+            </div>
+            {updateState?.error && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-sm text-red-200 bg-red-500/20 rounded-xl p-2 mt-2"
+              >
+                {updateState.error}
+              </motion.p>
+            )}
+          </div>
+        )}
       </motion.div>
 
       {/* Paramètres */}
@@ -148,7 +286,10 @@ export function ProfileView({ user }: ProfileViewProps) {
                 </p>
               </div>
             </div>
-            <Switch defaultChecked />
+            <Switch
+              checked={notificationsEnabled}
+              onCheckedChange={handleToggleNotifications}
+            />
           </div>
         </div>
       </motion.div>
@@ -244,7 +385,7 @@ export function ProfileView({ user }: ProfileViewProps) {
                 </ul>
               </div>
             </AlertDialogHeader>
-            <form action={formAction} className="space-y-4 mt-4">
+            <form action={deleteFormAction} className="space-y-4 mt-4">
               <div className="space-y-2">
                 <Label htmlFor="delete-password">
                   Confirmez avec votre mot de passe
@@ -258,13 +399,13 @@ export function ProfileView({ user }: ProfileViewProps) {
                   className="rounded-xl h-12"
                   autoComplete="current-password"
                 />
-                {state?.error && (
+                {deleteState?.error && (
                   <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="text-sm text-destructive bg-destructive/10 rounded-xl p-3"
                   >
-                    {state.error}
+                    {deleteState.error}
                   </motion.p>
                 )}
               </div>
@@ -278,10 +419,10 @@ export function ProfileView({ user }: ProfileViewProps) {
                 >
                   <Button
                     type="submit"
-                    disabled={pending}
+                    disabled={deletePending}
                     className="w-full sm:w-auto"
                   >
-                    {pending ? "Suppression..." : "Supprimer définitivement"}
+                    {deletePending ? "Suppression..." : "Supprimer définitivement"}
                   </Button>
                 </AlertDialogAction>
               </AlertDialogFooter>

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Check, MoreVertical } from "lucide-react";
+import { Check, Clock, Timer } from "lucide-react";
 
 import type { Habit } from "@/components/habits/types";
 
@@ -27,7 +27,19 @@ export function HabitCard({ habit, onToggle, onEdit }: HabitCardProps) {
     yellow: "from-yellow-400 to-yellow-600",
   };
 
+  const borderColorClasses: Record<string, string> = {
+    purple: "border-purple-500",
+    pink: "border-pink-500",
+    blue: "border-blue-500",
+    green: "border-green-500",
+    orange: "border-orange-500",
+    teal: "border-teal-500",
+    red: "border-red-500",
+    yellow: "border-yellow-500",
+  };
+
   const bgGradient = colorClasses[habit.color] || colorClasses.purple;
+  const borderColor = borderColorClasses[habit.color] || borderColorClasses.purple;
 
   return (
     <motion.div
@@ -37,10 +49,10 @@ export function HabitCard({ habit, onToggle, onEdit }: HabitCardProps) {
       exit={{ opacity: 0, scale: 0.9 }}
       className="relative"
     >
-      <div className="bg-card rounded-2xl p-4 shadow-sm border border-border overflow-hidden">
-        <div className={`absolute inset-0 bg-gradient-to-br ${bgGradient} opacity-5`} />
+      <div className={`bg-card/50 backdrop-blur-sm rounded-2xl p-4 shadow-sm border-2 ${borderColor} overflow-hidden relative`}>
+        <div className={`absolute inset-0 bg-gradient-to-br ${bgGradient} opacity-10 rounded-2xl pointer-events-none`} />
 
-        <div className="relative flex items-start justify-between gap-3">
+        <div className="relative z-10 flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <div className={`w-3 h-3 rounded-full bg-gradient-to-br ${bgGradient}`} />
@@ -51,7 +63,7 @@ export function HabitCard({ habit, onToggle, onEdit }: HabitCardProps) {
                 {habit.description}
               </p>
             )}
-            <div className="flex items-center gap-2 mt-2 ml-5">
+            <div className="flex flex-wrap items-center gap-2 mt-2 ml-5">
               <span className="text-xs text-muted-foreground">
                 {habit.category}
               </span>
@@ -59,6 +71,28 @@ export function HabitCard({ habit, onToggle, onEdit }: HabitCardProps) {
               <span className="text-xs text-muted-foreground">
                 {habit.streak} jours
               </span>
+              {habit.reminderTime && (
+                <>
+                  <span className="text-xs text-muted-foreground">•</span>
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">
+                      {habit.reminderTime}
+                    </span>
+                  </div>
+                </>
+              )}
+              {habit.duration && (
+                <>
+                  <span className="text-xs text-muted-foreground">•</span>
+                  <div className="flex items-center gap-1">
+                    <Timer className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">
+                      {habit.duration} min
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -82,13 +116,6 @@ export function HabitCard({ habit, onToggle, onEdit }: HabitCardProps) {
                 </motion.div>
               )}
             </motion.button>
-
-            <button
-              onClick={() => onEdit(habit)}
-              className="w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <MoreVertical className="w-5 h-5" />
-            </button>
           </div>
         </div>
 

@@ -2,13 +2,12 @@
 
 import { useState, useMemo, useTransition } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Plus, Search, Filter, TrendingUp } from "lucide-react";
+import { Search, Filter, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 
 import { HabitCard } from "@/components/habits/HabitCard";
 import { HabitForm } from "@/components/habits/HabitForm";
 import type { Habit } from "@/components/habits/types";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toggleHabitLog } from "@/app/(app)/actions";
 import { useRouter } from "next/navigation";
@@ -43,15 +42,36 @@ export function Dashboard({ habits }: DashboardProps) {
     setShowHabitForm(true);
   };
 
-  const handleAddHabit = () => {
-    setEditingHabit(undefined);
-    setShowHabitForm(true);
-  };
-
   const handleCloseForm = () => {
     setShowHabitForm(false);
     setEditingHabit(undefined);
   };
+
+  // Fonction pour vérifier si une habitude est active aujourd'hui
+  const isHabitActiveToday = useMemo(() => {
+    return (habit: Habit): boolean => {
+      // Si l'habitude est quotidienne, elle est toujours active
+      if (habit.frequency === "daily") {
+        return true;
+      }
+
+      // Pour les habitudes hebdomadaires ou personnalisées, vérifier si aujourd'hui est dans activeDays
+      if (habit.frequency === "weekly" || habit.frequency === "custom") {
+        if (!habit.activeDays || habit.activeDays.length === 0) {
+          return false;
+        }
+
+        // Obtenir le jour actuel (0 = dimanche, 1 = lundi, ..., 6 = samedi en JS)
+        const todayJs = new Date().getDay();
+        // Convertir vers notre système (0 = lundi, 1 = mardi, ..., 6 = dimanche)
+        const todayOurSystem = todayJs === 0 ? 6 : todayJs - 1;
+
+        return habit.activeDays.includes(todayOurSystem);
+      }
+
+      return true;
+    };
+  }, []);
 
   const categories = useMemo(() => {
     const cats = new Set(habits.map((h) => h.category));
@@ -60,6 +80,11 @@ export function Dashboard({ habits }: DashboardProps) {
 
   const filteredHabits = useMemo(() => {
     return habits.filter((habit) => {
+      // Filtrer d'abord par jour actif
+      if (!isHabitActiveToday(habit)) {
+        return false;
+      }
+
       const matchesSearch = habit.name
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
@@ -67,17 +92,19 @@ export function Dashboard({ habits }: DashboardProps) {
         !selectedCategory || habit.category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
-  }, [habits, searchQuery, selectedCategory]);
+  }, [habits, searchQuery, selectedCategory, isHabitActiveToday]);
 
   const todayStats = useMemo(() => {
     const today = new Date().toISOString().split("T")[0];
-    const completed = habits.filter((h) =>
+    // Filtrer seulement les habitudes actives aujourd'hui pour les stats
+    const activeHabitsToday = habits.filter((h) => isHabitActiveToday(h));
+    const completed = activeHabitsToday.filter((h) =>
       h.completedDates?.includes(today),
     ).length;
-    const total = habits.length;
+    const total = activeHabitsToday.length;
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
     return { completed, total, percentage };
-  }, [habits]);
+  }, [habits, isHabitActiveToday]);
 
   return (
     <div className="pb-24">
@@ -208,37 +235,12 @@ export function Dashboard({ habits }: DashboardProps) {
                   ? "Aucune habitude trouvée"
                   : "Aucune habitude pour le moment"}
               </p>
-              {!searchQuery && !selectedCategory && (
-                <Button
-                  type="button"
-                  onClick={handleAddHabit}
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Créer ma première habitude
-                </Button>
-              )}
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Bouton flottant d'ajout */}
-      {filteredHabits.length > 0 && (
-        <motion.button
-          type="button"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleAddHabit}
-          className="fixed bottom-24 right-6 w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-2xl shadow-lg flex items-center justify-center z-10"
-        >
-          <Plus className="w-6 h-6" />
-        </motion.button>
-      )}
-
-      {/* Formulaire d'habitude */}
+      {/* Formulaire d'habitude (édition uniquement) */}
       <AnimatePresence>
         {showHabitForm && (
           <HabitForm

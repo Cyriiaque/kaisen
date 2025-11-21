@@ -20,18 +20,44 @@ export function CalendarView({ habits }: CalendarViewProps) {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
+    
+    // getDay() retourne 0 (dimanche) à 6 (samedi)
+    // On ajuste pour commencer par lundi (0 = lundi, 6 = dimanche)
+    let startingDayOfWeek = firstDay.getDay() - 1;
+    if (startingDayOfWeek < 0) startingDayOfWeek = 6; // Si dimanche, on met à 6
 
     const days: { date: Date; isCurrentMonth: boolean }[] = [];
-    // Jours du mois précédent
-    for (let i = startingDayOfWeek - 1; i >= 0; i--) {
-      const date = new Date(year, month, -i);
-      days.push({ date, isCurrentMonth: false });
+    
+    // Jours du mois précédent pour compléter la première semaine
+    if (startingDayOfWeek > 0) {
+      const prevMonth = month === 0 ? 11 : month - 1;
+      const prevYear = month === 0 ? year - 1 : year;
+      const daysInPrevMonth = new Date(prevYear, prevMonth + 1, 0).getDate();
+      
+      for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+        const date = new Date(prevYear, prevMonth, daysInPrevMonth - i);
+        days.push({ date, isCurrentMonth: false });
+      }
     }
+    
     // Jours du mois actuel
     for (let i = 1; i <= daysInMonth; i++) {
       const date = new Date(year, month, i);
       days.push({ date, isCurrentMonth: true });
+    }
+    
+    // Jours du mois suivant pour compléter la dernière semaine
+    // On complète jusqu'à avoir un nombre de jours multiple de 7 (semaines complètes)
+    const totalDays = days.length;
+    const weeks = Math.ceil(totalDays / 7);
+    const targetDays = weeks * 7;
+    const remainingDays = targetDays - totalDays;
+    
+    if (remainingDays > 0 && remainingDays < 7) {
+      for (let i = 1; i <= remainingDays; i++) {
+        const date = new Date(year, month + 1, i);
+        days.push({ date, isCurrentMonth: false });
+      }
     }
 
     return days;
@@ -49,19 +75,82 @@ export function CalendarView({ habits }: CalendarViewProps) {
     );
   };
 
+  // Fonction pour vérifier si une habitude est active un jour donné
+  const isHabitActiveOnDate = (habit: Habit, dateStr: string): boolean => {
+    // Vérifier d'abord si l'habitude existait déjà à cette date
+    const habitCreatedAt = new Date(habit.createdAt);
+    habitCreatedAt.setUTCHours(0, 0, 0, 0);
+    const checkDate = new Date(dateStr);
+    checkDate.setUTCHours(0, 0, 0, 0);
+
+    // Si l'habitude a été créée après cette date, elle n'est pas active
+    if (habitCreatedAt > checkDate) {
+      return false;
+    }
+
+    // Si l'habitude est quotidienne, elle est active si elle existait déjà
+    if (habit.frequency === "daily") {
+      return true;
+    }
+
+    // Pour les habitudes hebdomadaires ou personnalisées, vérifier si le jour est dans activeDays
+    if (habit.frequency === "weekly" || habit.frequency === "custom") {
+      if (!habit.activeDays || habit.activeDays.length === 0) {
+        return false;
+      }
+
+      // Obtenir le jour de la date (0 = dimanche, 1 = lundi, ..., 6 = samedi en JS)
+      const dateJs = new Date(dateStr).getDay();
+      // Convertir vers notre système (0 = lundi, 1 = mardi, ..., 6 = dimanche)
+      const dayOurSystem = dateJs === 0 ? 6 : dateJs - 1;
+
+      return habit.activeDays.includes(dayOurSystem);
+    }
+
+    return true;
+  };
+
   const getCompletionForDate = (date: Date) => {
-    const dateString = date.toISOString().split("T")[0];
-    const habitsToCheck = selectedHabit
+    // Les dates sont stockées en UTC à minuit dans la base de données
+    // On doit donc convertir la date locale en UTC pour la comparaison
+    const utcDate = new Date(
+      Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+    );
+    const dateString = utcDate.toISOString().split("T")[0];
+    
+    let habitsToCheck = selectedHabit
       ? habits.filter((h) => h.id === selectedHabit)
       : habits;
-    const completed = habitsToCheck.filter((h) =>
+    
+    // Filtrer les habitudes actives ce jour-là (qui existaient déjà et sont actives)
+    habitsToCheck = habitsToCheck.filter((h) =>
+      isHabitActiveOnDate(h, dateString),
+    );
+    
+    const completedHabits = habitsToCheck.filter((h) =>
       h.completedDates?.includes(dateString),
-    ).length;
+    );
+    
+    const completed = completedHabits.length;
     const total = habitsToCheck.length;
+    
+    // Toutes les habitudes actives (complétées et non complétées)
+    const allActiveHabits = habitsToCheck.map((h) => ({
+      id: h.id,
+      color: h.color,
+      name: h.name,
+      isCompleted: h.completedDates?.includes(dateString) || false,
+    }));
+    
     return {
       completed,
       total,
       percentage: total > 0 ? (completed / total) * 100 : 0,
+      completedHabits: completedHabits.map((h) => ({
+        id: h.id,
+        color: h.color,
+      })),
+      allActiveHabits,
     };
   };
 
@@ -74,6 +163,17 @@ export function CalendarView({ habits }: CalendarViewProps) {
     teal: "from-teal-400 to-teal-600",
     red: "from-red-400 to-red-600",
     yellow: "from-yellow-400 to-yellow-600",
+  };
+
+  const borderColorClasses: Record<string, string> = {
+    purple: "border-purple-400",
+    pink: "border-pink-400",
+    blue: "border-blue-400",
+    green: "border-green-400",
+    orange: "border-orange-400",
+    teal: "border-teal-400",
+    red: "border-red-400",
+    yellow: "border-yellow-400",
   };
 
   return (
@@ -162,25 +262,18 @@ export function CalendarView({ habits }: CalendarViewProps) {
         </div>
 
         <div className="grid grid-cols-7 gap-2 text-center text-xs text-muted-foreground mb-2">
-          {["L", "M", "M", "J", "V", "S", "D"].map((day, index) => (
-            <div key={`day-${index}`}>{day}</div>
+          {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((day) => (
+            <div key={day} className="font-medium">
+              {day}
+            </div>
           ))}
         </div>
 
         <div className="grid grid-cols-7 gap-2">
           {calendarData.map(({ date, isCurrentMonth }) => {
-            const { completed, total, percentage } = getCompletionForDate(date);
+            const { allActiveHabits } = getCompletionForDate(date);
             const isToday =
               date.toDateString() === new Date().toDateString();
-
-            let bgClass = "bg-muted";
-            if (percentage > 0 && percentage < 50) {
-              bgClass = "bg-gradient-to-br from-purple-400 to-purple-600";
-            } else if (percentage >= 50 && percentage < 100) {
-              bgClass = "bg-gradient-to-br from-pink-400 to-pink-600";
-            } else if (percentage === 100) {
-              bgClass = "bg-gradient-to-br from-green-400 to-green-600";
-            }
 
             return (
               <div
@@ -190,25 +283,38 @@ export function CalendarView({ habits }: CalendarViewProps) {
                 }`}
               >
                 <div
-                  className={`w-full h-full rounded-xl flex flex-col items-center justify-center ${
-                    percentage > 0 ? bgClass : "bg-muted"
-                  } ${isToday ? "ring-2 ring-offset-2 ring-foreground" : ""}`}
+                  className={`w-full h-full rounded-xl flex flex-col items-center justify-center bg-muted relative ${
+                    isToday ? "ring-2 ring-offset-2 ring-foreground" : ""
+                  }`}
                 >
-                  <span
-                    className={`text-sm ${
-                      percentage > 0 ? "text-white" : "text-foreground"
-                    }`}
-                  >
+                  <span className="text-sm text-foreground mb-1">
                     {date.getDate()}
                   </span>
-                  {total > 0 && (
-                    <span
-                      className={`text-[10px] ${
-                        percentage > 0 ? "text-white/80" : "text-muted-foreground"
-                      }`}
-                    >
-                      {completed}/{total}
-                    </span>
+                  
+                  {/* Pastilles de couleur pour les habitudes actives */}
+                  {allActiveHabits.length > 0 && (
+                    <div className="flex flex-wrap gap-1 justify-center items-center max-w-full px-1">
+                      {allActiveHabits.slice(0, 4).map((habit) => (
+                        <div
+                          key={habit.id}
+                          className={`w-2 h-2 rounded-full ${
+                            habit.isCompleted
+                              ? `bg-gradient-to-br ${
+                                  colorClasses[habit.color] || colorClasses.purple
+                                }`
+                              : `border-2 ${
+                                  borderColorClasses[habit.color] || borderColorClasses.purple
+                                } bg-transparent opacity-60`
+                          }`}
+                          title={habit.name}
+                        />
+                      ))}
+                      {allActiveHabits.length > 4 && (
+                        <span className="text-[8px] text-muted-foreground">
+                          +{allActiveHabits.length - 4}
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>

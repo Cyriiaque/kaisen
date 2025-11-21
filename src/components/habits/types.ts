@@ -4,12 +4,14 @@ export interface Habit {
   description?: string;
   color: string;
   category: string;
+  categoryColor?: string;
   frequency: "daily" | "weekly" | "custom";
   activeDays?: number[]; // 0-6 for Monday-Sunday
   streak: number;
   completedDates?: string[]; // ISO date strings
   createdAt: string;
   reminderTime?: string;
+  duration?: string;
 }
 
 export interface User {

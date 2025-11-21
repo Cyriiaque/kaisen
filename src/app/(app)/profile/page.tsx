@@ -13,6 +13,9 @@ export default async function ProfilePage() {
       user={{
         email: user.email,
         name: user.name || "Utilisateur",
+        avatar: user.avatar || undefined,
+        theme: user.theme,
+        notificationsEnabled: user.notificationsEnabled,
       }}
     />
   );

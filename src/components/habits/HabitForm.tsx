@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { X, Check } from "lucide-react";
 import { toast } from "sonner";
 
@@ -25,23 +25,13 @@ import {
 
 interface HabitFormProps {
   habit?: Habit;
+  categories?: string[];
   onSave: () => void;
   onClose: () => void;
   onDelete?: () => void;
 }
 
-const COLORS = [
-  { name: "purple", label: "Violet" },
-  { name: "pink", label: "Rose" },
-  { name: "blue", label: "Bleu" },
-  { name: "green", label: "Vert" },
-  { name: "orange", label: "Orange" },
-  { name: "teal", label: "Turquoise" },
-  { name: "red", label: "Rouge" },
-  { name: "yellow", label: "Jaune" },
-];
-
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   "Santé",
   "Productivité",
   "Bien-être",
@@ -62,16 +52,30 @@ const DAYS = [
   { short: "D", full: "Dimanche" },
 ];
 
-export function HabitForm({ habit, onSave, onClose, onDelete }: HabitFormProps) {
+export function HabitForm({
+  habit,
+  categories = DEFAULT_CATEGORIES,
+  onSave,
+  onClose,
+  onDelete,
+}: HabitFormProps) {
   const [name, setName] = useState(habit?.name || "");
   const [description, setDescription] = useState(habit?.description || "");
-  const [color, setColor] = useState(habit?.color || "purple");
-  const [category, setCategory] = useState(habit?.category || "Santé");
+  const [category, setCategory] = useState(
+    habit?.category || categories[0] || "Autre",
+  );
   const [frequency, setFrequency] = useState<"daily" | "weekly" | "custom">(
     habit?.frequency || "daily",
   );
   const [activeDays, setActiveDays] = useState<number[]>(
     habit?.activeDays || [0, 1, 2, 3, 4, 5, 6],
+  );
+  // Pour l'heure, on récupère depuis reminderTime si disponible
+  const [time, setTime] = useState(habit?.reminderTime || "");
+  // Pour la durée, on récupère depuis l'habitude si disponible (en minutes)
+  // On parse la valeur si elle existe (car stockée comme string en base)
+  const [duration, setDuration] = useState<number | "">(
+    habit?.duration ? parseInt(habit.duration, 10) || "" : ""
   );
 
   const toggleDay = (dayIndex: number) => {
@@ -86,15 +90,29 @@ export function HabitForm({ habit, onSave, onClose, onDelete }: HabitFormProps) 
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    // Validation côté client
+    if (!name.trim()) {
+      toast.error("Le nom de l'habitude est requis");
+      return;
+    }
+
+    if (frequency !== "daily" && activeDays.length === 0) {
+      toast.error("Au moins un jour doit être sélectionné");
+      return;
+    }
+
     const formData = new FormData(e.currentTarget);
     formData.set("name", name);
     formData.set("description", description || "");
-    formData.set("color", color);
     formData.set("frequency", frequency.toUpperCase());
+    formData.set("categoryName", category || "");
     formData.set(
       "activeDays",
       frequency === "daily" ? "" : JSON.stringify(activeDays),
     );
+    formData.set("time", time || "");
+    formData.set("duration", duration !== "" ? duration.toString() : "");
 
     startTransition(async () => {
       if (habit) {
@@ -131,25 +149,15 @@ export function HabitForm({ habit, onSave, onClose, onDelete }: HabitFormProps) 
     });
   };
 
-  const colorClasses: Record<string, string> = {
-    purple: "from-purple-400 to-purple-600",
-    pink: "from-pink-400 to-pink-600",
-    blue: "from-blue-400 to-blue-600",
-    green: "from-green-400 to-green-600",
-    orange: "from-orange-400 to-orange-600",
-    teal: "from-teal-400 to-teal-600",
-    red: "from-red-400 to-red-600",
-    yellow: "from-yellow-400 to-yellow-600",
-  };
-
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6"
-      onClick={onClose}
-    >
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/50 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6"
+        onClick={onClose}
+      >
       <motion.div
         initial={{ y: "100%" }}
         animate={{ y: 0 }}
@@ -174,7 +182,7 @@ export function HabitForm({ habit, onSave, onClose, onDelete }: HabitFormProps) 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Nom */}
           <div>
-            <Label htmlFor="name">Nom de l&apos;habitude *</Label>
+            <Label htmlFor="name">Nom de l&apos;habitude</Label>
             <Input
               id="name"
               value={name}
@@ -192,43 +200,10 @@ export function HabitForm({ habit, onSave, onClose, onDelete }: HabitFormProps) 
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Pourquoi cette habitude est importante pour vous..."
+              placeholder="Ajouter une description..."
               className="mt-2 resize-none"
               rows={3}
             />
-          </div>
-
-          {/* Couleur */}
-          <div>
-            <Label>Couleur</Label>
-            <div className="grid grid-cols-4 gap-3 mt-2">
-              {COLORS.map((c) => (
-                <button
-                  key={c.name}
-                  type="button"
-                  onClick={() => setColor(c.name)}
-                  className="relative"
-                >
-                  <div
-                    className={`w-full aspect-square rounded-xl bg-gradient-to-br ${
-                      colorClasses[c.name]
-                    } ${
-                      color === c.name ? "ring-2 ring-offset-2 ring-foreground" : ""
-                    }`}
-                  >
-                    {color === c.name && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="absolute inset-0 flex items-center justify-center"
-                      >
-                        <Check className="w-6 h-6 text-white" />
-                      </motion.div>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Catégorie */}
@@ -238,14 +213,56 @@ export function HabitForm({ habit, onSave, onClose, onDelete }: HabitFormProps) 
               <SelectTrigger className="mt-2">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                {CATEGORIES.map((cat) => (
+              <SelectContent className="z-[110]" position="popper">
+                {categories.map((cat) => (
                   <SelectItem key={cat} value={cat}>
                     {cat}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Heure */}
+          <div>
+            <Label htmlFor="time">Heure (optionnel)</Label>
+            <Input
+              id="time"
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              className="mt-2"
+            />
+          </div>
+
+          {/* Durée */}
+          <div>
+            <Label htmlFor="duration">Durée (optionnel)</Label>
+            <div className="flex items-center gap-2 mt-2">
+              <Input
+                id="duration"
+                type="number"
+                min="0"
+                step="1"
+                value={duration === "" ? "" : duration}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "") {
+                    setDuration("");
+                  } else {
+                    const num = parseInt(value, 10);
+                    if (!isNaN(num) && num >= 0) {
+                      setDuration(num);
+                    }
+                  }
+                }}
+                placeholder="Ex: 10"
+                className="flex-1 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+              />
+              <span className="text-sm text-muted-foreground whitespace-nowrap">
+                minutes
+              </span>
+            </div>
           </div>
 
           {/* Fréquence */}
@@ -348,6 +365,7 @@ export function HabitForm({ habit, onSave, onClose, onDelete }: HabitFormProps) 
         </form>
       </motion.div>
     </motion.div>
+    </AnimatePresence>
   );
 }
 

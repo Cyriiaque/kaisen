@@ -37,6 +37,7 @@ async function StatsContent() {
   const habits = await prisma.habit.findMany({
     where: { userId: user.id },
     include: {
+      category: true,
       logs: {
         where: {
           done: true,
@@ -74,7 +75,8 @@ async function StatsContent() {
       name: habit.name,
       description: habit.description || undefined,
       color: habit.color,
-      category: "Autre",
+      category: habit.category?.name || "Autre",
+      categoryColor: habit.category?.color || "purple",
       frequency: (
         habit.frequency === "DAILY"
           ? "daily"

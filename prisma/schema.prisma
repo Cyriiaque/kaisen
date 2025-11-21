@@ -15,6 +15,9 @@ model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String?
+  avatar    String?
+  theme     String?  @default("light") // "light" | "dark"
+  notificationsEnabled Boolean @default(true)
   passwordHash String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -63,6 +66,7 @@ model Habit {
   activeDays  String?    // ex: "[1,2,3,4,5]" pour Lun-Ven (JSON array)
   category    Category?  @relation(fields: [categoryId], references: [id])
   categoryId  String?
+  duration    String?    // Durée de l'habitude (ex: "10 minutes", "30 min")
   reminders   Reminder[]
   logs        HabitLog[]
   createdAt   DateTime   @default(now())
