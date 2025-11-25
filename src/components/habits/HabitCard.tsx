@@ -8,10 +8,10 @@ import type { Habit } from "@/components/habits/types";
 interface HabitCardProps {
   habit: Habit;
   onToggle: (id: string) => void;
-  onEdit: (habit: Habit) => void;
+  onEdit?: (habit: Habit) => void;
 }
 
-export function HabitCard({ habit, onToggle, onEdit }: HabitCardProps) {
+export function HabitCard({ habit, onToggle }: HabitCardProps) {
   const isCompleted = habit.completedDates?.includes(
     new Date().toISOString().split("T")[0],
   );

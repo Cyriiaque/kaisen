@@ -48,7 +48,7 @@ export async function createCategory(_: unknown, formData: FormData) {
         userId: user.id,
       },
     });
-  } catch (error) {
+  } catch {
     return { error: "Une catégorie avec ce nom existe déjà" };
   }
 
@@ -94,7 +94,7 @@ export async function updateCategory(
         data: { color },
       }),
     ]);
-  } catch (error) {
+  } catch {
     return { error: "Impossible de mettre à jour cette catégorie" };
   }
 
@@ -130,7 +130,7 @@ export async function deleteCategory(id: string) {
     revalidatePath("/calendar");
 
     return { success: true };
-  } catch (error) {
+  } catch {
     return { error: "Impossible de supprimer cette catégorie" };
   }
 }

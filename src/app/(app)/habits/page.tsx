@@ -56,12 +56,8 @@ async function HabitsContent() {
         color: habit.color,
         category: habit.category?.name || "Autre",
         createdAt: habit.createdAt.toISOString(),
-        startDate: (habit as any).startDate
-          ? (habit as any).startDate.toISOString()
-          : undefined,
-        endDate: (habit as any).endDate
-          ? (habit as any).endDate.toISOString()
-          : undefined,
+        startDate: (habit as typeof habit & { startDate?: Date | null }).startDate?.toISOString(),
+        endDate: (habit as typeof habit & { endDate?: Date | null }).endDate?.toISOString(),
         frequency: (
           habit.frequency === "DAILY"
             ? "daily"

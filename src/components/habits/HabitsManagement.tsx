@@ -10,17 +10,6 @@ import { CategoryForm } from "@/components/habits/CategoryForm";
 import { HabitForm } from "@/components/habits/HabitForm";
 import type { Habit } from "@/components/habits/types";
 
-const CATEGORY_COLORS = [
-  { name: "purple", label: "Violet" },
-  { name: "pink", label: "Rose" },
-  { name: "blue", label: "Bleu" },
-  { name: "green", label: "Vert" },
-  { name: "orange", label: "Orange" },
-  { name: "teal", label: "Turquoise" },
-  { name: "red", label: "Rouge" },
-  { name: "yellow", label: "Jaune" },
-];
-
 const colorClasses: Record<string, string> = {
   purple: "from-purple-400 to-purple-600",
   pink: "from-pink-400 to-pink-600",
