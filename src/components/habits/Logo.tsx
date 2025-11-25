@@ -1,10 +1,44 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 interface LogoProps {
   className?: string;
   isDark?: boolean;
 }
 
-export function Logo({ className = "", isDark = false }: LogoProps) {
-  const fillColor = isDark ? "#FFFFFF" : "#000000";
+export function Logo({ className = "", isDark }: LogoProps) {
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    // Si isDark est fourni explicitement, l'utiliser
+    if (isDark !== undefined) {
+      setIsDarkMode(isDark);
+      return;
+    }
+
+    // Sinon, détecter automatiquement le thème
+    const checkTheme = () => {
+      const dark = document.documentElement.classList.contains("dark");
+      setIsDarkMode(dark);
+    };
+
+    checkTheme();
+
+    // Écouter les changements de thème
+    const observer = new MutationObserver(() => {
+      checkTheme();
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, [isDark]);
+
+  const fillColor = isDarkMode ? "#FFFFFF" : "#000000";
 
   return (
     <svg

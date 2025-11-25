@@ -84,6 +84,14 @@ async function DashboardContent() {
       description: habit.description || undefined,
       color: habit.color,
       category: habit.category?.name || "Autre",
+      // startDate / endDate peuvent ne pas être encore dans les types générés Prisma,
+      // on les accède donc via un cast souple.
+      startDate: (habit as any).startDate
+        ? (habit as any).startDate.toISOString()
+        : undefined,
+      endDate: (habit as any).endDate
+        ? (habit as any).endDate.toISOString()
+        : undefined,
       frequency: (
         habit.frequency === "DAILY"
           ? "daily"

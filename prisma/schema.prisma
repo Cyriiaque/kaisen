@@ -24,6 +24,7 @@ model User {
 
   sessions  Session[]
   habits    Habit[]
+  categories Category[]
   followers Follow[] @relation("followers")
   following Follow[] @relation("following")
   friendshipsA Friendship[] @relation("friendA")
@@ -44,9 +45,13 @@ model Session {
 
 model Category {
   id    String  @id @default(cuid())
-  name  String  @unique
+  name  String
   color String
+  user  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
   habits Habit[]
+  
+  @@unique([userId, name])
 }
 
 enum Frequency {
@@ -67,6 +72,8 @@ model Habit {
   category    Category?  @relation(fields: [categoryId], references: [id])
   categoryId  String?
   duration    String?    // Durée de l'habitude (ex: "10 minutes", "30 min")
+  startDate   DateTime?  // Date de début de l'habitude
+  endDate     DateTime?  // Date de fin de l'habitude
   reminders   Reminder[]
   logs        HabitLog[]
   createdAt   DateTime   @default(now())

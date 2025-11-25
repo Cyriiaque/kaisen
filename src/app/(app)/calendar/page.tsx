@@ -31,6 +31,7 @@ async function CalendarContent() {
   const habits = await prisma.habit.findMany({
     where: { userId: user.id },
     include: {
+      category: true,
       logs: {
         where: {
           done: true,
@@ -68,7 +69,9 @@ async function CalendarContent() {
       name: habit.name,
       description: habit.description || undefined,
       color: habit.color,
-      category: "Autre",
+      category: habit.category?.name || "Autre",
+      startDate: habit.startDate?.toISOString(),
+      endDate: habit.endDate?.toISOString(),
       frequency: (
         habit.frequency === "DAILY"
           ? "daily"

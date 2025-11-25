@@ -50,19 +50,61 @@ export function Dashboard({ habits }: DashboardProps) {
   // Fonction pour vérifier si une habitude est active aujourd'hui
   const isHabitActiveToday = useMemo(() => {
     return (habit: Habit): boolean => {
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+      const todayStr = today.toISOString().split("T")[0];
+
+      // Vérifier la période de validité (date de début / fin)
+      const habitStart = new Date(habit.startDate || habit.createdAt);
+      habitStart.setUTCHours(0, 0, 0, 0);
+      if (today < habitStart) {
+        return false;
+      }
+
+      if (habit.endDate) {
+        const habitEnd = new Date(habit.endDate);
+        habitEnd.setUTCHours(23, 59, 59, 999);
+        if (today > habitEnd) {
+          return false;
+        }
+      }
+
       // Si l'habitude est quotidienne, elle est toujours active
       if (habit.frequency === "daily") {
         return true;
       }
 
-      // Pour les habitudes hebdomadaires ou personnalisées, vérifier si aujourd'hui est dans activeDays
-      if (habit.frequency === "weekly" || habit.frequency === "custom") {
+      // Habitude hebdomadaire : une fois par semaine
+      if (habit.frequency === "weekly") {
+        const checkDate = today;
+
+        // Début de la semaine (lundi)
+        const weekStart = new Date(checkDate);
+        const day = weekStart.getUTCDay(); // 0 (dimanche) - 6 (samedi)
+        const diff = day === 0 ? -6 : 1 - day; // pour aller au lundi
+        weekStart.setUTCDate(weekStart.getUTCDate() + diff);
+        weekStart.setUTCHours(0, 0, 0, 0);
+
+        // Vérifier s'il y a déjà une complétion plus tôt dans la semaine
+        const hasCompletedEarlierThisWeek =
+          habit.completedDates?.some((dateStr) => {
+            const completedDate = new Date(dateStr);
+            completedDate.setUTCHours(0, 0, 0, 0);
+            return completedDate >= weekStart && completedDate < checkDate;
+          }) ?? false;
+
+        // Active tous les jours jusqu'à la première complétion de la semaine
+        return !hasCompletedEarlierThisWeek;
+      }
+
+      // Habitude personnalisée : utiliser les jours actifs
+      if (habit.frequency === "custom") {
         if (!habit.activeDays || habit.activeDays.length === 0) {
           return false;
         }
 
         // Obtenir le jour actuel (0 = dimanche, 1 = lundi, ..., 6 = samedi en JS)
-        const todayJs = new Date().getDay();
+        const todayJs = new Date(todayStr).getDay();
         // Convertir vers notre système (0 = lundi, 1 = mardi, ..., 6 = dimanche)
         const todayOurSystem = todayJs === 0 ? 6 : todayJs - 1;
 
@@ -156,16 +198,16 @@ export function Dashboard({ habits }: DashboardProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
-        className="mb-6"
+        className="mb-3"
       >
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             type="text"
             placeholder="Rechercher une habitude..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-12 bg-card border-border rounded-2xl h-12"
+            className="pl-10 bg-card border-border rounded-xl h-10 text-sm"
           />
         </div>
       </motion.div>
@@ -176,17 +218,17 @@ export function Dashboard({ habits }: DashboardProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="mb-6"
+          className="mb-4"
         >
-          <div className="flex items-center gap-2 mb-3">
-            <Filter className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Catégories</span>
+          <div className="flex items-center gap-1.5 mb-2">
+            <Filter className="w-3.5 h-3.5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Catégories</span>
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
             <button
               type="button"
               onClick={() => setSelectedCategory(null)}
-              className={`px-4 py-2 rounded-xl whitespace-nowrap transition-all ${
+              className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-all text-sm ${
                 !selectedCategory
                   ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md"
                   : "bg-muted text-muted-foreground"
@@ -199,7 +241,7 @@ export function Dashboard({ habits }: DashboardProps) {
                 key={category}
                 type="button"
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-xl whitespace-nowrap transition-all ${
+                className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-all text-sm ${
                   selectedCategory === category
                     ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md"
                     : "bg-muted text-muted-foreground"

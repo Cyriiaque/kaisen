@@ -2,8 +2,10 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/app/auth-actions";
 
 const CategorySchema = z.object({
   name: z.string().min(1, "Le nom de la catégorie est requis"),
@@ -20,6 +22,11 @@ const CategorySchema = z.object({
 });
 
 export async function createCategory(_: unknown, formData: FormData) {
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/login");
+  }
+
   const parsed = CategorySchema.safeParse({
     name: formData.get("name")?.toString() ?? "",
     color: formData.get("color")?.toString() ?? "purple",
@@ -38,6 +45,7 @@ export async function createCategory(_: unknown, formData: FormData) {
       data: {
         name,
         color,
+        userId: user.id,
       },
     });
   } catch (error) {
@@ -57,6 +65,11 @@ export async function updateCategory(
   _: unknown,
   formData: FormData,
 ) {
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/login");
+  }
+
   const parsed = CategorySchema.safeParse({
     name: formData.get("name")?.toString() ?? "",
     color: formData.get("color")?.toString() ?? "purple",
@@ -73,11 +86,11 @@ export async function updateCategory(
   try {
     await prisma.$transaction([
       prisma.category.update({
-        where: { id },
+        where: { id, userId: user.id },
         data: { name, color },
       }),
       prisma.habit.updateMany({
-        where: { categoryId: id },
+        where: { categoryId: id, userId: user.id },
         data: { color },
       }),
     ]);
@@ -94,15 +107,20 @@ export async function updateCategory(
 }
 
 export async function deleteCategory(id: string) {
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/login");
+  }
+
   try {
     // Détacher les habitudes de cette catégorie avant suppression
     await prisma.$transaction([
       prisma.habit.updateMany({
-        where: { categoryId: id },
+        where: { categoryId: id, userId: user.id },
         data: { categoryId: null },
       }),
       prisma.category.delete({
-        where: { id },
+        where: { id, userId: user.id },
       }),
     ]);
 

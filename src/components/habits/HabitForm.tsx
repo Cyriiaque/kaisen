@@ -77,6 +77,16 @@ export function HabitForm({
   const [duration, setDuration] = useState<number | "">(
     habit?.duration ? parseInt(habit.duration, 10) || "" : ""
   );
+  const [startDate, setStartDate] = useState(
+    habit?.startDate
+      ? habit.startDate.split("T")[0]
+      : habit?.createdAt
+      ? habit.createdAt.split("T")[0]
+      : new Date().toISOString().split("T")[0],
+  );
+  const [endDate, setEndDate] = useState(
+    habit?.endDate ? habit.endDate.split("T")[0] : "",
+  );
 
   const toggleDay = (dayIndex: number) => {
     setActiveDays((prev) =>
@@ -113,6 +123,8 @@ export function HabitForm({
     );
     formData.set("time", time || "");
     formData.set("duration", duration !== "" ? duration.toString() : "");
+    formData.set("startDate", startDate || "");
+    formData.set("endDate", endDate || "");
 
     startTransition(async () => {
       if (habit) {
@@ -265,6 +277,30 @@ export function HabitForm({
             </div>
           </div>
 
+          {/* Période */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="startDate">Date de début</Label>
+              <Input
+                id="startDate"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="endDate">Date de fin (optionnel)</Label>
+              <Input
+                id="endDate"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="mt-2"
+              />
+            </div>
+          </div>
+
           {/* Fréquence */}
           <div>
             <Label>Fréquence</Label>
@@ -305,8 +341,8 @@ export function HabitForm({
             </div>
           </div>
 
-          {/* Jours actifs */}
-          {frequency !== "daily" && (
+          {/* Jours actifs (uniquement pour les fréquences personnalisées) */}
+          {frequency === "custom" && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}

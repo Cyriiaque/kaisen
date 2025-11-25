@@ -7,20 +7,27 @@ export function AppHeader() {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    const savedTheme = window.localStorage.getItem("kaisen_theme");
-    if (savedTheme === "dark") {
-      setIsDark(true);
-    }
-  }, []);
+    // Détecter le thème initial
+    const checkTheme = () => {
+      const isDarkMode = document.documentElement.classList.contains("dark");
+      setIsDark(isDarkMode);
+    };
 
-  useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-    window.localStorage.setItem("kaisen_theme", isDark ? "dark" : "light");
-  }, [isDark]);
+    // Vérifier au montage
+    checkTheme();
+
+    // Écouter les changements de thème
+    const observer = new MutationObserver(() => {
+      checkTheme();
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="sticky top-0 bg-background/80 backdrop-blur-xl border-b border-border z-40 px-6 py-4">

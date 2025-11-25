@@ -10,6 +10,8 @@ export interface Habit {
   streak: number;
   completedDates?: string[]; // ISO date strings
   createdAt: string;
+  startDate?: string;
+  endDate?: string;
   reminderTime?: string;
   duration?: string;
 }

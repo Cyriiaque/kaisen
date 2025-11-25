@@ -77,6 +77,8 @@ async function StatsContent() {
       color: habit.color,
       category: habit.category?.name || "Autre",
       categoryColor: habit.category?.color || "purple",
+      startDate: habit.startDate?.toISOString(),
+      endDate: habit.endDate?.toISOString(),
       frequency: (
         habit.frequency === "DAILY"
           ? "daily"

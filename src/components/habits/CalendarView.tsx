@@ -2,8 +2,9 @@
 
 import { useState, useMemo } from "react";
 import { motion } from "motion/react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, Filter } from "lucide-react";
 
+import { Input } from "@/components/ui/input";
 import type { Habit } from "@/components/habits/types";
 
 interface CalendarViewProps {
@@ -12,7 +13,9 @@ interface CalendarViewProps {
 
 export function CalendarView({ habits }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedHabit, setSelectedHabit] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedDay, setSelectedDay] = useState<Date | null>(new Date());
 
   const calendarData = useMemo(() => {
     const year = currentDate.getFullYear();
@@ -77,15 +80,24 @@ export function CalendarView({ habits }: CalendarViewProps) {
 
   // Fonction pour vérifier si une habitude est active un jour donné
   const isHabitActiveOnDate = (habit: Habit, dateStr: string): boolean => {
-    // Vérifier d'abord si l'habitude existait déjà à cette date
-    const habitCreatedAt = new Date(habit.createdAt);
-    habitCreatedAt.setUTCHours(0, 0, 0, 0);
+    // Vérifier d'abord si l'habitude était dans sa période de validité à cette date
+    const habitStart = new Date(habit.startDate || habit.createdAt);
+    habitStart.setUTCHours(0, 0, 0, 0);
     const checkDate = new Date(dateStr);
     checkDate.setUTCHours(0, 0, 0, 0);
 
-    // Si l'habitude a été créée après cette date, elle n'est pas active
-    if (habitCreatedAt > checkDate) {
+    // Si la date est avant le début de l'habitude, elle n'est pas active
+    if (habitStart > checkDate) {
       return false;
+    }
+
+    // Si une date de fin est définie et dépassée, l'habitude n'est plus active
+    if (habit.endDate) {
+      const habitEnd = new Date(habit.endDate);
+      habitEnd.setUTCHours(23, 59, 59, 999);
+      if (checkDate > habitEnd) {
+        return false;
+      }
     }
 
     // Si l'habitude est quotidienne, elle est active si elle existait déjà
@@ -93,8 +105,47 @@ export function CalendarView({ habits }: CalendarViewProps) {
       return true;
     }
 
-    // Pour les habitudes hebdomadaires ou personnalisées, vérifier si le jour est dans activeDays
-    if (habit.frequency === "weekly" || habit.frequency === "custom") {
+    // Habitude hebdomadaire : une fois par semaine
+    if (habit.frequency === "weekly") {
+      // Début de la semaine (lundi) pour la date donnée
+      const weekStart = new Date(checkDate);
+      const day = weekStart.getUTCDay(); // 0 (dimanche) - 6 (samedi)
+      const diff = day === 0 ? -6 : 1 - day; // pour aller au lundi
+      weekStart.setUTCDate(weekStart.getUTCDate() + diff);
+      weekStart.setUTCHours(0, 0, 0, 0);
+
+      // Fin de la semaine (dimanche)
+      const weekEnd = new Date(weekStart);
+      weekEnd.setUTCDate(weekEnd.getUTCDate() + 6);
+      weekEnd.setUTCHours(23, 59, 59, 999);
+
+      // Chercher toutes les complétions de cette semaine
+      const completionsThisWeek =
+        habit.completedDates
+          ?.map((date) => {
+            const d = new Date(date);
+            d.setUTCHours(0, 0, 0, 0);
+            return d;
+          })
+          .filter((d) => d >= weekStart && d <= weekEnd) ?? [];
+
+      if (completionsThisWeek.length === 0) {
+        // Pas de complétion cette semaine : pastille vide tous les jours de la semaine
+        return true;
+      }
+
+      // Première complétion de la semaine
+      const firstCompletion = completionsThisWeek.reduce((min, d) =>
+        d < min ? d : min,
+      completionsThisWeek[0]);
+
+      // Active pour tous les jours jusqu'au jour de complétion (inclus),
+      // plus de pastille après.
+      return checkDate <= firstCompletion;
+    }
+
+    // Habitude personnalisée : utiliser les jours actifs
+    if (habit.frequency === "custom") {
       if (!habit.activeDays || habit.activeDays.length === 0) {
         return false;
       }
@@ -110,6 +161,22 @@ export function CalendarView({ habits }: CalendarViewProps) {
     return true;
   };
 
+  const categories = useMemo(() => {
+    const cats = new Set(habits.map((h) => h.category));
+    return Array.from(cats);
+  }, [habits]);
+
+  const filteredHabits = useMemo(() => {
+    return habits.filter((habit) => {
+      const matchesSearch = habit.name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+      const matchesCategory =
+        !selectedCategory || habit.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [habits, searchQuery, selectedCategory]);
+
   const getCompletionForDate = (date: Date) => {
     // Les dates sont stockées en UTC à minuit dans la base de données
     // On doit donc convertir la date locale en UTC pour la comparaison
@@ -118,9 +185,7 @@ export function CalendarView({ habits }: CalendarViewProps) {
     );
     const dateString = utcDate.toISOString().split("T")[0];
     
-    let habitsToCheck = selectedHabit
-      ? habits.filter((h) => h.id === selectedHabit)
-      : habits;
+    let habitsToCheck = filteredHabits;
     
     // Filtrer les habitudes actives ce jour-là (qui existaient déjà et sont actives)
     habitsToCheck = habitsToCheck.filter((h) =>
@@ -188,46 +253,66 @@ export function CalendarView({ habits }: CalendarViewProps) {
         <p className="text-muted-foreground">Visualisez vos progrès</p>
       </motion.div>
 
-      {/* Sélecteur d'habitude */}
+      {/* Barre de recherche */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="mb-6"
+        className="mb-3"
       >
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          <button
-            type="button"
-            onClick={() => setSelectedHabit(null)}
-            className={`px-4 py-2 rounded-xl whitespace-nowrap transition-all ${
-              !selectedHabit
-                ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md"
-                : "bg-muted text-muted-foreground"
-            }`}
-          >
-            Toutes les habitudes
-          </button>
-          {habits.map((habit) => (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Rechercher une habitude..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 bg-card border-border rounded-xl h-10 text-sm"
+          />
+        </div>
+      </motion.div>
+
+      {/* Filtres par catégorie */}
+      {categories.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="mb-4"
+        >
+          <div className="flex items-center gap-1.5 mb-2">
+            <Filter className="w-3.5 h-3.5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Catégories</span>
+          </div>
+          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
             <button
-              key={habit.id}
               type="button"
-              onClick={() => setSelectedHabit(habit.id)}
-              className={`px-4 py-2 rounded-xl whitespace-nowrap transition-all flex items-center gap-2 ${
-                selectedHabit === habit.id
+              onClick={() => setSelectedCategory(null)}
+              className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-all text-sm ${
+                !selectedCategory
                   ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md"
                   : "bg-muted text-muted-foreground"
               }`}
             >
-              <div
-                className={`w-2 h-2 rounded-full bg-gradient-to-br ${
-                  colorClasses[habit.color]
-                }`}
-              />
-              {habit.name}
+              Toutes
             </button>
-          ))}
-        </div>
-      </motion.div>
+            {categories.map((category) => (
+              <button
+                key={category}
+                type="button"
+                onClick={() => setSelectedCategory(category)}
+                className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-all text-sm ${
+                  selectedCategory === category
+                    ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* Calendrier */}
       <motion.div
@@ -274,10 +359,15 @@ export function CalendarView({ habits }: CalendarViewProps) {
             const { allActiveHabits } = getCompletionForDate(date);
             const isToday =
               date.toDateString() === new Date().toDateString();
+            const isSelected =
+              selectedDay &&
+              date.toDateString() === selectedDay.toDateString();
 
             return (
-              <div
+              <button
                 key={date.toISOString()}
+                type="button"
+                onClick={() => setSelectedDay(date)}
                 className={`aspect-square rounded-xl flex flex-col items-center justify-center text-xs ${
                   isCurrentMonth ? "" : "opacity-30"
                 }`}
@@ -285,7 +375,7 @@ export function CalendarView({ habits }: CalendarViewProps) {
                 <div
                   className={`w-full h-full rounded-xl flex flex-col items-center justify-center bg-muted relative ${
                     isToday ? "ring-2 ring-offset-2 ring-foreground" : ""
-                  }`}
+                  } ${isSelected ? "outline outline-2 outline-offset-2 outline-primary" : ""}`}
                 >
                   <span className="text-sm text-foreground mb-1">
                     {date.getDate()}
@@ -317,11 +407,80 @@ export function CalendarView({ habits }: CalendarViewProps) {
                     </div>
                   )}
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
       </motion.div>
+
+      {/* Détails du jour sélectionné */}
+      {selectedDay && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-4 bg-card rounded-2xl p-4 shadow-sm border border-border"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-xs text-muted-foreground">Habitudes ce jour-là</p>
+              <p className="text-sm text-foreground font-medium">
+                {selectedDay.toLocaleDateString("fr-FR", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                })}
+              </p>
+            </div>
+          </div>
+
+          {(() => {
+            const { allActiveHabits } = getCompletionForDate(selectedDay);
+
+            if (allActiveHabits.length === 0) {
+              return (
+                <p className="text-xs text-muted-foreground">
+                  Aucune habitude active ce jour-là.
+                </p>
+              );
+            }
+
+            return (
+              <div className="space-y-2">
+                {allActiveHabits.map((habit) => (
+                  <div
+                    key={habit.id}
+                    className="flex items-center justify-between text-xs bg-muted rounded-xl px-3 py-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`w-2.5 h-2.5 rounded-full ${
+                          habit.isCompleted
+                            ? `bg-gradient-to-br ${
+                                colorClasses[habit.color] || colorClasses.purple
+                              }`
+                            : `border-2 ${
+                                borderColorClasses[habit.color] || borderColorClasses.purple
+                              } bg-transparent opacity-70`
+                        }`}
+                      />
+                      <span className="text-foreground">{habit.name}</span>
+                    </div>
+                    <span
+                      className={`text-[10px] ${
+                        habit.isCompleted
+                          ? "text-emerald-500"
+                          : "text-muted-foreground"
+                      }`}
+                    >
+                      {habit.isCompleted ? "Complétée" : "Non complétée"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </motion.div>
+      )}
     </div>
   );
 }

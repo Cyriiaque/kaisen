@@ -45,15 +45,24 @@ export function StatsView({ habits }: StatsViewProps) {
 
     // Fonction pour vérifier si une habitude est active un jour donné
     const isHabitActiveOnDate = (habit: Habit, dateStr: string): boolean => {
-      // Vérifier d'abord si l'habitude existait déjà à cette date
-      const habitCreatedAt = new Date(habit.createdAt);
-      habitCreatedAt.setUTCHours(0, 0, 0, 0);
+      // Vérifier d'abord si l'habitude était dans sa période de validité à cette date
+      const habitStart = new Date(habit.startDate || habit.createdAt);
+      habitStart.setUTCHours(0, 0, 0, 0);
       const checkDate = new Date(dateStr);
       checkDate.setUTCHours(0, 0, 0, 0);
 
-      // Si l'habitude a été créée après cette date, elle n'est pas active
-      if (habitCreatedAt > checkDate) {
+      // Si la date est avant le début de l'habitude, elle n'est pas active
+      if (habitStart > checkDate) {
         return false;
+      }
+
+      // Si une date de fin est définie et dépassée, l'habitude n'est plus active
+      if (habit.endDate) {
+        const habitEnd = new Date(habit.endDate);
+        habitEnd.setUTCHours(23, 59, 59, 999);
+        if (checkDate > habitEnd) {
+          return false;
+        }
       }
 
       // Si l'habitude est quotidienne, elle est active si elle existait déjà
@@ -61,8 +70,37 @@ export function StatsView({ habits }: StatsViewProps) {
         return true;
       }
 
-      // Pour les habitudes hebdomadaires ou personnalisées, vérifier si le jour est dans activeDays
-      if (habit.frequency === "weekly" || habit.frequency === "custom") {
+      // Habitude hebdomadaire : une fois par semaine
+      if (habit.frequency === "weekly") {
+        const todayDateObj = new Date(today);
+        todayDateObj.setUTCHours(0, 0, 0, 0);
+
+        // Ne pas considérer les dates dans le futur
+        if (checkDate > todayDateObj) {
+          return false;
+        }
+
+        // Début de la semaine (lundi)
+        const weekStart = new Date(checkDate);
+        const day = weekStart.getUTCDay(); // 0 (dimanche) - 6 (samedi)
+        const diff = day === 0 ? -6 : 1 - day; // pour aller au lundi
+        weekStart.setUTCDate(weekStart.getUTCDate() + diff);
+        weekStart.setUTCHours(0, 0, 0, 0);
+
+        // Vérifier s'il y a déjà une complétion plus tôt dans la semaine
+        const hasCompletedEarlierThisWeek =
+          habit.completedDates?.some((date) => {
+            const completedDate = new Date(date);
+            completedDate.setUTCHours(0, 0, 0, 0);
+            return completedDate >= weekStart && completedDate < checkDate;
+          }) ?? false;
+
+        // Active tous les jours jusqu'à la première complétion de la semaine
+        return !hasCompletedEarlierThisWeek;
+      }
+
+      // Habitude personnalisée : utiliser les jours actifs
+      if (habit.frequency === "custom") {
         if (!habit.activeDays || habit.activeDays.length === 0) {
           return false;
         }
@@ -112,13 +150,24 @@ export function StatsView({ habits }: StatsViewProps) {
     let totalCompletedInPeriod = 0;
 
     habits.forEach((habit) => {
-      const habitCreatedAt = new Date(habit.createdAt);
-      habitCreatedAt.setUTCHours(0, 0, 0, 0);
-      const periodStart = new Date(Math.max(habitCreatedAt.getTime(), startDate.getTime()));
+      const habitStart = new Date(habit.startDate || habit.createdAt);
+      habitStart.setUTCHours(0, 0, 0, 0);
+      const periodStart = new Date(
+        Math.max(habitStart.getTime(), startDate.getTime()),
+      );
       
       // Parcourir tous les jours de la période
       const currentDate = new Date(periodStart);
-      while (currentDate <= todayDateObj) {
+      const habitEnd =
+        habit.endDate && habit.endDate.trim() !== ""
+          ? (() => {
+              const d = new Date(habit.endDate as string);
+              d.setUTCHours(23, 59, 59, 999);
+              return d;
+            })()
+          : todayDateObj;
+
+      while (currentDate <= todayDateObj && currentDate <= habitEnd) {
         const dateStr = currentDate.toISOString().split("T")[0];
         if (isHabitActiveOnDate(habit, dateStr)) {
           totalPossible++;
@@ -147,35 +196,35 @@ export function StatsView({ habits }: StatsViewProps) {
     if (period === "week") {
       // 7 jours
       const days = Array.from({ length: 7 }, (_, i) => {
-        const date = new Date();
-        date.setDate(date.getDate() - (6 - i));
-        return date.toISOString().split("T")[0];
-      });
+      const date = new Date();
+      date.setDate(date.getDate() - (6 - i));
+      return date.toISOString().split("T")[0];
+    });
 
       chartData = days.map((date) => {
-        const activeHabitsOnDate = habits.filter((h) =>
-          isHabitActiveOnDate(h, date),
-        );
-        const completed = activeHabitsOnDate.filter((h) =>
-          h.completedDates?.includes(date),
-        ).length;
-        const total = activeHabitsOnDate.length;
-        const dayName = [
-          "Dim",
-          "Lun",
-          "Mar",
-          "Mer",
-          "Jeu",
-          "Ven",
-          "Sam",
-        ][new Date(date).getDay()];
-        return {
+      const activeHabitsOnDate = habits.filter((h) =>
+        isHabitActiveOnDate(h, date),
+      );
+      const completed = activeHabitsOnDate.filter((h) =>
+        h.completedDates?.includes(date),
+      ).length;
+      const total = activeHabitsOnDate.length;
+      const dayName = [
+        "Dim",
+        "Lun",
+        "Mar",
+        "Mer",
+        "Jeu",
+        "Ven",
+        "Sam",
+      ][new Date(date).getDay()];
+      return {
           label: dayName,
-          completed,
-          total,
-          date,
-        };
-      });
+        completed,
+        total,
+        date,
+      };
+    });
     } else if (period === "month") {
       // ~30 jours, regroupés par semaine
       const weeks: string[][] = [];
@@ -410,74 +459,74 @@ export function StatsView({ habits }: StatsViewProps) {
             </LineChart>
           ) : (
             <BarChart data={stats.chartData}>
-              <XAxis
+            <XAxis
                 dataKey="label"
-                axisLine={false}
-                tickLine={false}
+              axisLine={false}
+              tickLine={false}
                 tick={(props: { x?: number; y?: number; payload?: { value?: string } }) => {
-                  const { x, y, payload } = props;
+                const { x, y, payload } = props;
                   const data = stats.chartData.find(
                     (d) => d.label === payload?.value,
                   );
-                  return (
-                    <g transform={`translate(${x},${y})`}>
-                      <text
-                        x={0}
-                        y={0}
-                        dy={0}
-                        textAnchor="middle"
-                        fill="var(--muted-foreground)"
-                        fontSize={12}
-                      >
+                return (
+                  <g transform={`translate(${x},${y})`}>
+                    <text
+                      x={0}
+                      y={0}
+                      dy={0}
+                      textAnchor="middle"
+                      fill="var(--muted-foreground)"
+                      fontSize={12}
+                    >
                         {payload?.value}
-                      </text>
+                    </text>
                       {period === "week" && (
-                        <text
-                          x={0}
-                          y={0}
-                          dy={14}
-                          textAnchor="middle"
-                          fill="var(--muted-foreground)"
-                          fontSize={10}
-                        >
-                          {data ? `${data.completed}/${data.total}` : ""}
-                        </text>
+                    <text
+                      x={0}
+                      y={0}
+                      dy={14}
+                      textAnchor="middle"
+                      fill="var(--muted-foreground)"
+                      fontSize={10}
+                    >
+                      {data ? `${data.completed}/${data.total}` : ""}
+                    </text>
                       )}
-                    </g>
-                  );
-                }}
-              />
-              <YAxis hide />
-              <Bar dataKey="completed" radius={[8, 8, 0, 0]}>
+                  </g>
+                );
+              }}
+            />
+            <YAxis hide />
+            <Bar dataKey="completed" radius={[8, 8, 0, 0]}>
                 {stats.chartData.map((entry) => {
-                  const isToday =
+                const isToday =
                     period === "week" &&
-                    entry.date === new Date().toISOString().split("T")[0];
-                  return (
-                    <Cell
-                      key={`cell-${entry.date}`}
-                      fill={
-                        isToday
-                          ? "url(#gradientToday)"
-                          : entry.completed > 0
-                          ? "url(#gradient)"
-                          : "var(--muted)"
-                      }
-                    />
-                  );
-                })}
-              </Bar>
-              <defs>
-                <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgb(168, 85, 247)" />
-                  <stop offset="100%" stopColor="rgb(236, 72, 153)" />
-                </linearGradient>
-                <linearGradient id="gradientToday" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgb(251, 146, 60)" />
-                  <stop offset="100%" stopColor="rgb(234, 88, 12)" />
-                </linearGradient>
-              </defs>
-            </BarChart>
+                  entry.date === new Date().toISOString().split("T")[0];
+                return (
+                  <Cell
+                    key={`cell-${entry.date}`}
+                    fill={
+                      isToday
+                        ? "url(#gradientToday)"
+                        : entry.completed > 0
+                        ? "url(#gradient)"
+                        : "var(--muted)"
+                    }
+                  />
+                );
+              })}
+            </Bar>
+            <defs>
+              <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="rgb(168, 85, 247)" />
+                <stop offset="100%" stopColor="rgb(236, 72, 153)" />
+              </linearGradient>
+              <linearGradient id="gradientToday" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="rgb(251, 146, 60)" />
+                <stop offset="100%" stopColor="rgb(234, 88, 12)" />
+              </linearGradient>
+            </defs>
+          </BarChart>
           )}
         </ResponsiveContainer>
       </motion.div>

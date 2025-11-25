@@ -15,6 +15,8 @@ const HabitSchema = z.object({
   categoryName: z.string().optional(),
   time: z.string().optional(), // HH:mm format
   duration: z.string().optional(), // Durée de l'habitude
+  startDate: z.string().optional(), // Date de début (YYYY-MM-DD)
+  endDate: z.string().optional(), // Date de fin (YYYY-MM-DD)
 });
 
 export async function createHabit(_: unknown, formData: FormData) {
@@ -31,6 +33,8 @@ export async function createHabit(_: unknown, formData: FormData) {
     categoryName: formData.get("categoryName")?.toString() ?? undefined,
     time: formData.get("time")?.toString() ?? undefined,
     duration: formData.get("duration")?.toString() ?? undefined,
+    startDate: formData.get("startDate")?.toString() ?? undefined,
+    endDate: formData.get("endDate")?.toString() ?? undefined,
   });
 
   if (!parsed.success) {
@@ -39,12 +43,27 @@ export async function createHabit(_: unknown, formData: FormData) {
     };
   }
 
-  const { name, description, frequency, activeDays, categoryName, time, duration } = parsed.data;
+  const {
+    name,
+    description,
+    frequency,
+    activeDays,
+    categoryName,
+    time,
+    duration,
+    startDate,
+    endDate,
+  } = parsed.data;
 
-  // Gérer les jours actifs : pour DAILY, on met tous les jours (0-6)
+  // Gérer les jours actifs :
+  // - DAILY : tous les jours (0-6)
+  // - WEEKLY : une fois par semaine, pas de jours spécifiques
+  // - CUSTOM : jours personnalisés obligatoires
   let finalActiveDays: string | null = null;
   if (frequency === "DAILY") {
     finalActiveDays = JSON.stringify([0, 1, 2, 3, 4, 5, 6]);
+  } else if (frequency === "WEEKLY") {
+    finalActiveDays = null;
   } else if (activeDays && activeDays.trim() !== "") {
     // Valider que activeDays est un JSON valide
     try {
@@ -52,22 +71,37 @@ export async function createHabit(_: unknown, formData: FormData) {
       if (Array.isArray(parsedDays) && parsedDays.length > 0) {
         finalActiveDays = activeDays;
       } else {
-        return { error: "Au moins un jour doit être sélectionné" };
+        return { error: "Au moins un jour doit être sélectionné pour une fréquence personnalisée" };
       }
     } catch {
       return { error: "Format des jours actifs invalide" };
     }
   } else {
-    // Si ce n'est pas DAILY et qu'aucun activeDays n'est fourni
-    return { error: "Au moins un jour doit être sélectionné" };
+    // Si c'est CUSTOM et qu'aucun activeDays n'est fourni
+    return { error: "Au moins un jour doit être sélectionné pour une fréquence personnalisée" };
   }
+
+  // Calculer les dates de début et de fin
+  const startDateValue =
+    startDate && startDate.trim() !== ""
+      ? new Date(startDate)
+      : undefined;
+  const endDateValue =
+    endDate && endDate.trim() !== ""
+      ? new Date(endDate)
+      : undefined;
 
   // Créer ou récupérer la catégorie si fournie et en déduire la couleur
   let categoryId: string | null = null;
   let color = "purple";
   if (categoryName && categoryName.trim() !== "") {
     const existingCategory = await prisma.category.findUnique({
-      where: { name: categoryName },
+      where: { 
+        userId_name: {
+          userId: user.id,
+          name: categoryName,
+        },
+      },
     });
 
     if (existingCategory) {
@@ -77,6 +111,7 @@ export async function createHabit(_: unknown, formData: FormData) {
       const newCategory = await prisma.category.create({
         data: {
           name: categoryName,
+          userId: user.id,
           color, // couleur par défaut, modifiable dans la page de gestion des catégories
         },
       });
@@ -95,6 +130,8 @@ export async function createHabit(_: unknown, formData: FormData) {
       activeDays: finalActiveDays,
       categoryId,
       duration: duration || null,
+      startDate: startDateValue,
+      endDate: endDateValue,
     },
   });
 
@@ -141,6 +178,8 @@ export async function updateHabit(
     categoryName: formData.get("categoryName")?.toString() ?? undefined,
     time: formData.get("time")?.toString() ?? undefined,
     duration: formData.get("duration")?.toString() ?? undefined,
+    startDate: formData.get("startDate")?.toString() ?? undefined,
+    endDate: formData.get("endDate")?.toString() ?? undefined,
   });
 
   if (!parsed.success) {
@@ -149,12 +188,27 @@ export async function updateHabit(
     };
   }
 
-  const { name, description, frequency, activeDays, categoryName, time, duration } = parsed.data;
+  const {
+    name,
+    description,
+    frequency,
+    activeDays,
+    categoryName,
+    time,
+    duration,
+    startDate,
+    endDate,
+  } = parsed.data;
 
-  // Gérer les jours actifs : pour DAILY, on met tous les jours (0-6)
+  // Gérer les jours actifs :
+  // - DAILY : tous les jours (0-6)
+  // - WEEKLY : une fois par semaine, pas de jours spécifiques
+  // - CUSTOM : jours personnalisés obligatoires
   let finalActiveDays: string | null = null;
   if (frequency === "DAILY") {
     finalActiveDays = JSON.stringify([0, 1, 2, 3, 4, 5, 6]);
+  } else if (frequency === "WEEKLY") {
+    finalActiveDays = null;
   } else if (activeDays && activeDays.trim() !== "") {
     // Valider que activeDays est un JSON valide
     try {
@@ -162,22 +216,37 @@ export async function updateHabit(
       if (Array.isArray(parsedDays) && parsedDays.length > 0) {
         finalActiveDays = activeDays;
       } else {
-        return { error: "Au moins un jour doit être sélectionné" };
+        return { error: "Au moins un jour doit être sélectionné pour une fréquence personnalisée" };
       }
     } catch {
       return { error: "Format des jours actifs invalide" };
     }
   } else {
-    // Si ce n'est pas DAILY et qu'aucun activeDays n'est fourni
-    return { error: "Au moins un jour doit être sélectionné" };
+    // Si c'est CUSTOM et qu'aucun activeDays n'est fourni
+    return { error: "Au moins un jour doit être sélectionné pour une fréquence personnalisée" };
   }
+
+  // Calculer les dates de début et de fin
+  const startDateValue =
+    startDate && startDate.trim() !== ""
+      ? new Date(startDate)
+      : undefined;
+  const endDateValue =
+    endDate && endDate.trim() !== ""
+      ? new Date(endDate)
+      : undefined;
 
   // Créer ou récupérer la catégorie si fournie et en déduire la couleur
   let categoryId: string | null = habit.categoryId;
   let color = habit.color;
   if (categoryName && categoryName.trim() !== "") {
     const existingCategory = await prisma.category.findUnique({
-      where: { name: categoryName },
+      where: { 
+        userId_name: {
+          userId: user.id,
+          name: categoryName,
+        },
+      },
     });
 
     if (existingCategory) {
@@ -187,6 +256,7 @@ export async function updateHabit(
       const newCategory = await prisma.category.create({
         data: {
           name: categoryName,
+          userId: user.id,
           color,
         },
       });
@@ -205,6 +275,8 @@ export async function updateHabit(
       activeDays: finalActiveDays,
       categoryId,
       duration: duration || null,
+      startDate: startDateValue,
+      endDate: endDateValue,
     },
   });
 

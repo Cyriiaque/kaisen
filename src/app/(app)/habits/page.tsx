@@ -30,6 +30,7 @@ async function HabitsContent() {
 
   const [categories, habits] = await Promise.all([
     prisma.category.findMany({
+      where: { userId: user.id },
       orderBy: { name: "asc" },
     }),
     prisma.habit.findMany({
@@ -55,6 +56,12 @@ async function HabitsContent() {
         color: habit.color,
         category: habit.category?.name || "Autre",
         createdAt: habit.createdAt.toISOString(),
+        startDate: (habit as any).startDate
+          ? (habit as any).startDate.toISOString()
+          : undefined,
+        endDate: (habit as any).endDate
+          ? (habit as any).endDate.toISOString()
+          : undefined,
         frequency: (
           habit.frequency === "DAILY"
             ? "daily"
