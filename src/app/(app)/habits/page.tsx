@@ -49,15 +49,25 @@ async function HabitsContent() {
   return (
     <HabitsManagement
       categories={categories}
-      habits={habits.map((habit) => ({
-        id: habit.id,
-        name: habit.name,
-        description: habit.description || undefined,
-        color: habit.color,
-        category: habit.category?.name || "Autre",
-        createdAt: habit.createdAt.toISOString(),
-        startDate: (habit as typeof habit & { startDate?: Date | null }).startDate?.toISOString(),
-        endDate: (habit as typeof habit & { endDate?: Date | null }).endDate?.toISOString(),
+      habits={habits.map((habit) => {
+        // Récupérer les dates en utilisant un accès sécurisé
+        const habitWithDates = habit as typeof habit & {
+          startDate?: Date | null;
+          endDate?: Date | null;
+        };
+        return {
+          id: habit.id,
+          name: habit.name,
+          description: habit.description || undefined,
+          color: habit.color,
+          category: habit.category?.name || "Autre",
+          createdAt: habit.createdAt.toISOString(),
+          startDate: habitWithDates.startDate
+            ? habitWithDates.startDate.toISOString()
+            : undefined,
+          endDate: habitWithDates.endDate
+            ? habitWithDates.endDate.toISOString()
+            : undefined,
         frequency: (
           habit.frequency === "DAILY"
             ? "daily"
@@ -70,7 +80,8 @@ async function HabitsContent() {
           : undefined,
         duration: habit.duration || undefined,
         reminderTime: habit.reminders[0]?.atTime || undefined,
-      }))}
+        };
+      })}
     />
   );
 }

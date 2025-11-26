@@ -77,16 +77,18 @@ export function HabitForm({
   const [duration, setDuration] = useState<number | "">(
     habit?.duration ? parseInt(habit.duration, 10) || "" : ""
   );
-  const [startDate, setStartDate] = useState(
-    habit?.startDate
-      ? habit.startDate.split("T")[0]
-      : habit?.createdAt
-      ? habit.createdAt.split("T")[0]
-      : new Date().toISOString().split("T")[0],
-  );
-  const [endDate, setEndDate] = useState(
-    habit?.endDate ? habit.endDate.split("T")[0] : "",
-  );
+  const [startDate, setStartDate] = useState(() => {
+    if (habit?.startDate) {
+      return habit.startDate.split("T")[0];
+    }
+    if (habit?.createdAt) {
+      return habit.createdAt.split("T")[0];
+    }
+    return new Date().toISOString().split("T")[0];
+  });
+  const [endDate, setEndDate] = useState(() => {
+    return habit?.endDate ? habit.endDate.split("T")[0] : "";
+  });
 
   const toggleDay = (dayIndex: number) => {
     setActiveDays((prev) =>
@@ -109,6 +111,12 @@ export function HabitForm({
 
     if (frequency !== "daily" && activeDays.length === 0) {
       toast.error("Au moins un jour doit être sélectionné");
+      return;
+    }
+
+    // Validation des dates : la date de début ne peut pas être supérieure à la date de fin
+    if (startDate && endDate && startDate > endDate) {
+      toast.error("La date de début ne peut pas être supérieure à la date de fin");
       return;
     }
 
@@ -286,6 +294,7 @@ export function HabitForm({
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
+                max={endDate || undefined}
                 className="mt-2"
               />
             </div>
@@ -296,6 +305,7 @@ export function HabitForm({
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
+                min={startDate || undefined}
                 className="mt-2"
               />
             </div>

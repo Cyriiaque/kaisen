@@ -30,6 +30,8 @@ interface HabitsManagementProps {
     color: string;
     category: string;
     createdAt: string;
+    startDate?: string;
+    endDate?: string;
     frequency?: "daily" | "weekly" | "custom";
     activeDays?: number[];
     duration?: string;
@@ -207,6 +209,8 @@ export function HabitsManagement({
                   streak: 0,
                   completedDates: [],
                   createdAt: habit.createdAt,
+                  startDate: habit.startDate,
+                  endDate: habit.endDate,
                   reminderTime: habit.reminderTime,
                   duration: habit.duration,
                 })

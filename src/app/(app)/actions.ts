@@ -82,14 +82,15 @@ export async function createHabit(_: unknown, formData: FormData) {
   }
 
   // Calculer les dates de début et de fin
+  // Le format reçu est YYYY-MM-DD, on doit créer une Date à minuit UTC
   const startDateValue =
     startDate && startDate.trim() !== ""
-      ? new Date(startDate)
-      : undefined;
+      ? new Date(startDate + "T00:00:00.000Z")
+      : null;
   const endDateValue =
     endDate && endDate.trim() !== ""
-      ? new Date(endDate)
-      : undefined;
+      ? new Date(endDate + "T00:00:00.000Z")
+      : null;
 
   // Créer ou récupérer la catégorie si fournie et en déduire la couleur
   let categoryId: string | null = null;
@@ -227,14 +228,15 @@ export async function updateHabit(
   }
 
   // Calculer les dates de début et de fin
+  // Le format reçu est YYYY-MM-DD, on doit créer une Date à minuit UTC
   const startDateValue =
     startDate && startDate.trim() !== ""
-      ? new Date(startDate)
-      : undefined;
+      ? new Date(startDate + "T00:00:00.000Z")
+      : null;
   const endDateValue =
     endDate && endDate.trim() !== ""
-      ? new Date(endDate)
-      : undefined;
+      ? new Date(endDate + "T00:00:00.000Z")
+      : null;
 
   // Créer ou récupérer la catégorie si fournie et en déduire la couleur
   let categoryId: string | null = habit.categoryId;
