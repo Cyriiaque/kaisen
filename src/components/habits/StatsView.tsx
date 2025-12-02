@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { motion } from "motion/react";
+import Link from "next/link";
 import {
   TrendingUp,
   Target,
@@ -372,27 +373,29 @@ export function StatsView({ habits }: StatsViewProps) {
       </motion.div>
 
       {/* Taux de complétion */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.1 }}
-        className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl p-6 mb-6 text-white shadow-lg"
-      >
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="text-white/80 text-sm">Taux de réussite</p>
-            <h2 className="text-white text-4xl mt-1">
-              {stats.completionRate}%
-            </h2>
+      <Link href="/calendar">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.1 }}
+          className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl p-6 mb-6 text-white shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-white/80 text-sm">Taux de réussite</p>
+              <h2 className="text-white text-4xl mt-1">
+                {stats.completionRate}%
+              </h2>
+            </div>
+            <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+              <CalendarIcon className="w-10 h-10" />
+            </div>
           </div>
-          <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <CalendarIcon className="w-10 h-10" />
-          </div>
-        </div>
-        <p className="text-white/80 text-sm">
-          {stats.totalCompletedInPeriod} habitudes complétées sur {stats.totalPossible}
-        </p>
-      </motion.div>
+          <p className="text-white/80 text-sm">
+            {stats.totalCompletedInPeriod} habitudes complétées sur {stats.totalPossible}
+          </p>
+        </motion.div>
+      </Link>
 
       {/* Graphique */}
       <motion.div
@@ -458,7 +461,7 @@ export function StatsView({ habits }: StatsViewProps) {
               </defs>
             </LineChart>
           ) : (
-            <BarChart data={stats.chartData}>
+            <BarChart data={stats.chartData} margin={{ bottom: 10 }}>
             <XAxis
                 dataKey="label"
               axisLine={false}
@@ -473,18 +476,18 @@ export function StatsView({ habits }: StatsViewProps) {
                     <text
                       x={0}
                       y={0}
-                      dy={0}
+                      dy={period === "week" || period === "month" ? 8 : 0}
                       textAnchor="middle"
                       fill="var(--muted-foreground)"
                       fontSize={12}
                     >
                         {payload?.value}
                     </text>
-                      {period === "week" && (
+                      {(period === "week" || period === "month") && (
                     <text
                       x={0}
                       y={0}
-                      dy={14}
+                      dy={period === "week" ? 22 : 22}
                       textAnchor="middle"
                       fill="var(--muted-foreground)"
                       fontSize={10}

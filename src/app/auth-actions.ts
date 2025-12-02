@@ -7,6 +7,7 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
+import { uploadAvatar, deleteAvatar } from "@/app/upload-actions";
 
 const SESSION_COOKIE_NAME = "kaisen_session";
 
@@ -185,15 +186,10 @@ export async function deleteAccount(_: unknown, formData: FormData) {
 const updateProfileSchema = z.object({
   name: z.string().trim().min(1, "Le nom est requis"),
   email: z.string().email("Email invalide"),
-  avatar: z
-    .string()
-    .refine(
-      (val) => !val || val === "" || z.string().url().safeParse(val).success,
-      "URL d'avatar invalide",
-    )
-    .optional(),
+  avatar: z.string().optional(),
   theme: z.enum(["light", "dark"]),
   notificationsEnabled: z.boolean(),
+  password: z.string().optional(),
 });
 
 export async function updateProfile(_: unknown, formData: FormData) {
@@ -202,13 +198,41 @@ export async function updateProfile(_: unknown, formData: FormData) {
     return { error: "Non authentifié" };
   }
 
-  const avatarValue = formData.get("avatar")?.toString() ?? "";
+  // Vérifier s'il y a un fichier avatar à uploader
+  const avatarFile = formData.get("avatarFile") as File | null;
+  let avatarPath = formData.get("avatar")?.toString() ?? "";
+  const oldAvatarPath = user.avatar;
+
+  // Si un fichier est fourni, l'uploader
+  if (avatarFile && avatarFile.size > 0) {
+    // Supprimer l'ancien fichier si il existe
+    if (oldAvatarPath) {
+      await deleteAvatar(oldAvatarPath);
+    }
+
+    const uploadFormData = new FormData();
+    uploadFormData.append("avatar", avatarFile);
+    const uploadResult = await uploadAvatar(uploadFormData);
+    
+    if (uploadResult.error) {
+      return { error: uploadResult.error };
+    }
+    
+    if (uploadResult.path) {
+      avatarPath = uploadResult.path;
+    }
+  }
+
+  const emailChanged = formData.get("email")?.toString() !== user.email;
+  const password = formData.get("password")?.toString() ?? "";
+
   const parsed = updateProfileSchema.safeParse({
     name: formData.get("name")?.toString() ?? "",
     email: formData.get("email")?.toString() ?? "",
-    avatar: avatarValue === "" ? undefined : avatarValue,
+    avatar: avatarPath === "" ? undefined : avatarPath,
     theme: formData.get("theme")?.toString() ?? "light",
     notificationsEnabled: formData.get("notificationsEnabled") === "true",
+    password: emailChanged ? password : undefined,
   });
 
   if (!parsed.success) {
@@ -221,10 +245,36 @@ export async function updateProfile(_: unknown, formData: FormData) {
 
   // Vérifier si l'email est déjà utilisé par un autre utilisateur
   if (email !== user.email) {
+    // Vérifier que le mot de passe est fourni si l'email change
+    if (!password || password === "") {
+      return { error: "Le mot de passe est requis pour changer l'email" };
+    }
+
+    // Vérifier le mot de passe
+    const userWithPassword = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { id: true, passwordHash: true },
+    });
+
+    if (!userWithPassword) {
+      return { error: "Utilisateur introuvable" };
+    }
+
+    const valid = await bcrypt.compare(password, userWithPassword.passwordHash);
+    if (!valid) {
+      return { error: "Mot de passe incorrect" };
+    }
+
+    // Vérifier si le nouvel email est déjà utilisé
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
       return { error: "Cet email est déjà utilisé" };
     }
+  }
+
+  // Si l'avatar est supprimé (chaîne vide ou null) et qu'il y avait un ancien fichier, le supprimer
+  if ((!avatar || avatar === "") && oldAvatarPath && oldAvatarPath !== avatarPath) {
+    await deleteAvatar(oldAvatarPath);
   }
 
   // Mettre à jour le profil
@@ -240,6 +290,6 @@ export async function updateProfile(_: unknown, formData: FormData) {
   });
 
   revalidatePath("/profile");
-  return { success: true };
+  return { success: true, avatar: avatar || null };
 }
 

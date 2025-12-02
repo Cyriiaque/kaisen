@@ -11,6 +11,7 @@ import type { Habit } from "@/components/habits/types";
 import { Input } from "@/components/ui/input";
 import { toggleHabitLog } from "@/app/(app)/actions";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface DashboardProps {
   habits: Habit[];
@@ -151,47 +152,49 @@ export function Dashboard({ habits }: DashboardProps) {
   return (
     <div className="pb-24">
       {/* Header avec stats du jour */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl p-6 mb-6 text-white shadow-lg"
-      >
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="text-white/80 text-sm">Aujourd&apos;hui</p>
-            <h2 className="text-white">
-              {new Date().toLocaleDateString("fr-FR", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-              })}
-            </h2>
-          </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-4 py-2">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" />
-              <span>{todayStats.percentage}%</span>
+      <Link href="/calendar">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl p-6 mb-6 text-white shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-white/80 text-sm">Aujourd&apos;hui</p>
+              <h2 className="text-white">
+                {new Date().toLocaleDateString("fr-FR", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                })}
+              </h2>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-4 py-2">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                <span>{todayStats.percentage}%</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-white/80 text-sm">Progression du jour</span>
-            <span className="text-white">
-              {todayStats.completed}/{todayStats.total}
-            </span>
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-white/80 text-sm">Progression du jour</span>
+              <span className="text-white">
+                {todayStats.completed}/{todayStats.total}
+              </span>
+            </div>
+            <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${todayStats.percentage}%` }}
+                transition={{ duration: 1, delay: 0.5 }}
+                className="h-full bg-white rounded-full"
+              />
+            </div>
           </div>
-          <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${todayStats.percentage}%` }}
-              transition={{ duration: 1, delay: 0.5 }}
-              className="h-full bg-white rounded-full"
-            />
-          </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      </Link>
 
       {/* Barre de recherche */}
       <motion.div

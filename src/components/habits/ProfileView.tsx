@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ImageWithFallback } from "@/components/habits/ImageWithFallback";
 import { logoutAction, deleteAccount, updateProfile } from "@/app/auth-actions";
+import { uploadAvatar } from "@/app/upload-actions";
 
 interface ProfileViewProps {
   user: {
@@ -43,6 +44,8 @@ export function ProfileView({ user }: ProfileViewProps) {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [deleteState, deleteFormAction, deletePending] = useActionState(deleteAccount, null);
   const [updateState, updateFormAction, updatePending] = useActionState(updateProfile, null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -50,6 +53,12 @@ export function ProfileView({ user }: ProfileViewProps) {
     email: user.email || "",
     avatar: user.avatar || "",
   });
+  const [password, setPassword] = useState("");
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  
+  // Vérifier si l'email a changé
+  const emailChanged = formData.email !== user.email;
 
   useEffect(() => {
     // Initialiser le thème depuis la DB ou localStorage
@@ -79,6 +88,8 @@ export function ProfileView({ user }: ProfileViewProps) {
     if (updateState?.success) {
       router.refresh();
       setIsEditing(false);
+      setAvatarPreview(null);
+      setAvatarFile(null);
     }
   }, [updateState, router]);
 
@@ -115,6 +126,22 @@ export function ProfileView({ user }: ProfileViewProps) {
       email: user.email || "",
       avatar: user.avatar || "",
     });
+    setPassword("");
+    setAvatarPreview(null);
+    setAvatarFile(null);
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      // Créer un aperçu
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -134,106 +161,211 @@ export function ProfileView({ user }: ProfileViewProps) {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.1 }}
-        className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl p-6 mb-6 text-white shadow-lg relative"
+        className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl p-6 sm:p-8 mb-6 text-white shadow-lg relative overflow-hidden"
       >
         {!isEditing && (
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-4 right-4 text-white hover:bg-white/20"
+            className="absolute top-4 right-4 text-white hover:bg-white/20 backdrop-blur-sm transition-all"
             onClick={() => setIsEditing(true)}
           >
             <Edit2 className="w-5 h-5" />
           </Button>
         )}
-        <div className="flex items-center gap-4">
-          <div className="w-20 h-20 rounded-2xl overflow-hidden bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            {formData.avatar || user.avatar ? (
-              <ImageWithFallback
-                src={formData.avatar || user.avatar || ""}
-                alt={formData.name || user.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <User className="w-10 h-10 text-white" />
+        
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+          {/* Photo de profil */}
+          <div className="relative flex-shrink-0">
+            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-white/20 backdrop-blur-sm flex items-center justify-center ring-2 ring-white/30 shadow-lg">
+              {avatarPreview ? (
+                <img
+                  src={avatarPreview}
+                  alt="Aperçu"
+                  className="w-full h-full object-cover"
+                />
+              ) : formData.avatar || user.avatar ? (
+                <ImageWithFallback
+                  src={formData.avatar || user.avatar || ""}
+                  alt={formData.name || user.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User className="w-12 h-12 sm:w-14 sm:h-14 text-white" />
+              )}
+            </div>
+            {isEditing && (
+              <label
+                htmlFor="avatar"
+                className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center cursor-pointer hover:bg-white shadow-lg transition-all hover:scale-110 active:scale-95"
+              >
+                <Edit2 className="w-5 h-5 text-purple-600" />
+                <input
+                  id="avatar"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  className="hidden"
+                />
+              </label>
             )}
           </div>
-          <div className="flex-1">
+
+          {/* Informations */}
+          <div className="flex-1 w-full">
             {isEditing ? (
-              <div className="space-y-2">
-                <Input
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="bg-white/20 border-white/30 text-white placeholder:text-white/60 rounded-xl h-10"
-                  placeholder="Nom"
-                />
-                <Input
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  type="email"
-                  className="bg-white/20 border-white/30 text-white placeholder:text-white/60 rounded-xl h-10"
-                  placeholder="Email"
-                />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-white/90 text-sm font-medium">
+                    Nom <span className="text-red-200">*</span>
+                  </Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="bg-white/20 border-white/30 text-white placeholder:text-white/50 rounded-xl h-11 focus:bg-white/25 focus:border-white/40 transition-all"
+                    placeholder="Votre nom"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-white/90 text-sm font-medium">
+                    Email <span className="text-red-200">*</span>
+                  </Label>
+                  <Input
+                    id="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    type="email"
+                    className="bg-white/20 border-white/30 text-white placeholder:text-white/50 rounded-xl h-11 focus:bg-white/25 focus:border-white/40 transition-all"
+                    placeholder="votre@email.com"
+                  />
+                </div>
+                {emailChanged && (
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-white/90 text-sm font-medium">
+                      Mot de passe <span className="text-red-200">*</span>
+                    </Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="bg-white/20 border-white/30 text-white placeholder:text-white/50 rounded-xl h-11 focus:bg-white/25 focus:border-white/40 transition-all"
+                      placeholder="Confirmez avec votre mot de passe"
+                    />
+                    <p className="text-white/70 text-xs">
+                      Un mot de passe est requis pour changer l&apos;email
+                    </p>
+                  </div>
+                )}
               </div>
             ) : (
-              <>
-                <h2 className="text-white mb-1">{user.name}</h2>
+              <div>
+                <h2 className="text-white text-2xl font-semibold mb-1">{user.name}</h2>
                 <p className="text-white/80 text-sm">{user.email}</p>
-              </>
+              </div>
             )}
           </div>
         </div>
+
         {isEditing && (
-          <div className="mt-4 space-y-2">
-            <Label htmlFor="avatar" className="text-white/90 text-sm">
-              URL de l&apos;avatar (optionnel)
-            </Label>
-            <Input
-              id="avatar"
-              value={formData.avatar}
-              onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
-              className="bg-white/20 border-white/30 text-white placeholder:text-white/60 rounded-xl h-10"
-              placeholder="https://example.com/avatar.jpg"
-            />
-            <div className="flex gap-2 mt-3">
+          <div className="mt-6 pt-6 border-t border-white/20 space-y-4">
+            {avatarFile && (
+              <div className="p-3 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
+                <div className="flex items-center gap-2 text-white/90 text-sm">
+                  <Check className="w-4 h-4 text-green-300" />
+                  <span>Nouvelle photo sélectionnée : {avatarFile.name}</span>
+                </div>
+              </div>
+            )}
+            
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 bg-white/20 border-white/30 text-white hover:bg-white/30"
+                className="flex-1 bg-white/10 border-white/30 text-white hover:bg-white/20 hover:border-white/40 transition-all"
                 onClick={handleCancelEdit}
               >
                 <X className="w-4 h-4 mr-2" />
                 Annuler
               </Button>
-              <form action={updateFormAction} className="flex-1">
-                <input type="hidden" name="name" value={formData.name} />
-                <input type="hidden" name="email" value={formData.email} />
-                <input type="hidden" name="avatar" value={formData.avatar} />
-                <input type="hidden" name="theme" value={isDark ? "dark" : "light"} />
-                <input
-                  type="hidden"
-                  name="notificationsEnabled"
-                  value={String(notificationsEnabled)}
-                />
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  setIsSubmitting(true);
+                  setSubmitError(null);
+                  
+                  const submitFormData = new FormData();
+                  submitFormData.append("name", formData.name);
+                  submitFormData.append("email", formData.email);
+                  submitFormData.append("avatar", formData.avatar || user.avatar || "");
+                  
+                  // Ajouter le mot de passe si l'email a changé
+                  if (emailChanged) {
+                    if (!password) {
+                      setSubmitError("Le mot de passe est requis pour changer l'email");
+                      setIsSubmitting(false);
+                      return;
+                    }
+                    submitFormData.append("password", password);
+                  }
+                  
+                  // Ajouter le fichier si présent
+                  if (avatarFile) {
+                    submitFormData.append("avatarFile", avatarFile);
+                  }
+                  
+                  submitFormData.append("theme", isDark ? "dark" : "light");
+                  submitFormData.append("notificationsEnabled", String(notificationsEnabled));
+                  
+                  const result = await updateProfile(null, submitFormData);
+                  setIsSubmitting(false);
+                  
+                  if (result?.success) {
+                    // Mettre à jour formData avec le nouveau chemin d'avatar si disponible
+                    if (result.avatar) {
+                      setFormData((prev) => ({
+                        ...prev,
+                        avatar: result.avatar || prev.avatar,
+                      }));
+                      // Réinitialiser l'aperçu pour utiliser le vrai chemin du serveur
+                      setAvatarPreview(null);
+                    } else {
+                      // Si pas de nouveau chemin, réinitialiser l'aperçu
+                      setAvatarPreview(null);
+                    }
+                    
+                    // Fermer le mode édition
+                    setIsEditing(false);
+                    
+                    // Réinitialiser le fichier et le mot de passe
+                    setAvatarFile(null);
+                    setPassword("");
+                    
+                    // Recharger les données du serveur pour synchroniser
+                    router.refresh();
+                  } else if (result?.error) {
+                    setSubmitError(result.error);
+                  }
+                }}
+                className="flex-1"
+              >
                 <Button
                   type="submit"
                   size="sm"
-                  className="w-full bg-white text-purple-600 hover:bg-white/90"
-                  disabled={updatePending}
+                  className="w-full bg-white text-purple-600 hover:bg-white/90 shadow-md hover:shadow-lg transition-all font-semibold"
+                  disabled={updatePending || isSubmitting}
                 >
                   <Check className="w-4 h-4 mr-2" />
-                  {updatePending ? "Enregistrement..." : "Enregistrer"}
+                  {updatePending || isSubmitting ? "Enregistrement..." : "Enregistrer"}
                 </Button>
               </form>
             </div>
-            {updateState?.error && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-sm text-red-200 bg-red-500/20 rounded-xl p-2 mt-2"
-              >
-                {updateState.error}
-              </motion.p>
+            
+            {(updateState?.error || submitError) && (
+              <p className="text-sm text-red-200 bg-red-500/20 rounded-xl p-3 border border-red-400/30">
+                {updateState?.error || submitError}
+              </p>
             )}
           </div>
         )}
@@ -290,30 +422,6 @@ export function ProfileView({ user }: ProfileViewProps) {
               checked={notificationsEnabled}
               onCheckedChange={handleToggleNotifications}
             />
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Statistiques rapides */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="mb-6"
-      >
-        <h3 className="text-foreground mb-3">Votre activité</h3>
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-card rounded-2xl p-4 shadow-sm border border-border">
-            <p className="text-2xl text-foreground mb-1">12</p>
-            <p className="text-muted-foreground text-xs">Habitudes</p>
-          </div>
-          <div className="bg-card rounded-2xl p-4 shadow-sm border border-border">
-            <p className="text-2xl text-foreground mb-1">47</p>
-            <p className="text-muted-foreground text-xs">Jours actifs</p>
-          </div>
-          <div className="bg-card rounded-2xl p-4 shadow-sm border border-border">
-            <p className="text-2xl text-foreground mb-1">89%</p>
-            <p className="text-muted-foreground text-xs">Réussite</p>
           </div>
         </div>
       </motion.div>

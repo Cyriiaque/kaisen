@@ -256,7 +256,7 @@ export function HabitsManagement({
       {showHabitForm && (
         <HabitForm
           habit={editingHabit}
-          categories={categoryNames}
+          categories={categories}
           onSave={handleHabitSave}
           onClose={handleCloseHabitForm}
           onDelete={editingHabit ? handleHabitDelete : undefined}

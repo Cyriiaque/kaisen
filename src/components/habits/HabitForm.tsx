@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X } from "lucide-react";
 import { toast } from "sonner";
@@ -25,7 +25,8 @@ import {
 
 interface HabitFormProps {
   habit?: Habit;
-  categories?: string[];
+  categories?: string[] | { name: string; color: string }[];
+  categoryColors?: Record<string, string>;
   onSave: () => void;
   onClose: () => void;
   onDelete?: () => void;
@@ -52,17 +53,44 @@ const DAYS = [
   { short: "D", full: "Dimanche" },
 ];
 
+const colorClasses: Record<string, string> = {
+  purple: "from-purple-400 to-purple-600",
+  pink: "from-pink-400 to-pink-600",
+  blue: "from-blue-400 to-blue-600",
+  green: "from-green-400 to-green-600",
+  orange: "from-orange-400 to-orange-600",
+  teal: "from-teal-400 to-teal-600",
+  red: "from-red-400 to-red-600",
+  yellow: "from-yellow-400 to-yellow-600",
+};
+
 export function HabitForm({
   habit,
   categories = DEFAULT_CATEGORIES,
+  categoryColors,
   onSave,
   onClose,
   onDelete,
 }: HabitFormProps) {
+  // Normaliser les catégories pour avoir un format uniforme
+  const normalizedCategories = useMemo(() => {
+    if (!categories || categories.length === 0) return DEFAULT_CATEGORIES.map(name => ({ name, color: "purple" }));
+    
+    if (typeof categories[0] === "string") {
+      // Si c'est un tableau de strings, créer des objets avec couleur par défaut
+      return (categories as string[]).map(name => ({
+        name,
+        color: categoryColors?.[name] || "purple",
+      }));
+    }
+    
+    // Si c'est déjà un tableau d'objets
+    return categories as { name: string; color: string }[];
+  }, [categories, categoryColors]);
   const [name, setName] = useState(habit?.name || "");
   const [description, setDescription] = useState(habit?.description || "");
   const [category, setCategory] = useState(
-    habit?.category || categories[0] || "Autre",
+    habit?.category || normalizedCategories[0]?.name || "Autre",
   );
   const [frequency, setFrequency] = useState<"daily" | "weekly" | "custom">(
     habit?.frequency || "daily",
@@ -184,7 +212,7 @@ export function HabitForm({
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-background w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-xl max-h-[90vh] overflow-y-auto"
+        className="bg-background w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-xl max-h-[90vh] overflow-hidden"
       >
         <div className="sticky top-0 bg-background border-b border-border px-6 py-4 flex items-center justify-between rounded-t-3xl">
           <h2 className="text-foreground">
@@ -199,10 +227,10 @@ export function HabitForm({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[calc(90vh-80px)] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50 dark:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/40 dark:hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/60">
           {/* Nom */}
           <div>
-            <Label htmlFor="name">Nom de l&apos;habitude</Label>
+            <Label htmlFor="name">Nom de l&apos;habitude *</Label>
             <Input
               id="name"
               value={name}
@@ -215,7 +243,7 @@ export function HabitForm({
 
           {/* Description */}
           <div>
-            <Label htmlFor="description">Description (optionnel)</Label>
+            <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
               value={description}
@@ -228,15 +256,41 @@ export function HabitForm({
 
           {/* Catégorie */}
           <div>
-            <Label htmlFor="category">Catégorie</Label>
+            <Label htmlFor="category">Catégorie *</Label>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger className="mt-2">
-                <SelectValue />
+                <SelectValue>
+                  {(() => {
+                    const selectedCat = normalizedCategories.find(
+                      (c) => c.name === category,
+                    );
+                    return selectedCat ? (
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`w-3 h-3 rounded-full bg-gradient-to-br ${
+                            colorClasses[selectedCat.color] ||
+                            colorClasses.purple
+                          }`}
+                        />
+                        <span>{selectedCat.name}</span>
+                      </div>
+                    ) : (
+                      category
+                    );
+                  })()}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent className="z-[110]" position="popper">
-                {categories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
+                {normalizedCategories.map((cat) => (
+                  <SelectItem key={cat.name} value={cat.name}>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-3 h-3 rounded-full bg-gradient-to-br ${
+                          colorClasses[cat.color] || colorClasses.purple
+                        }`}
+                      />
+                      <span>{cat.name}</span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -245,19 +299,19 @@ export function HabitForm({
 
           {/* Heure */}
           <div>
-            <Label htmlFor="time">Heure (optionnel)</Label>
+            <Label htmlFor="time">Heure</Label>
             <Input
               id="time"
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="mt-2"
+              className="mt-2 dark:[&::-webkit-calendar-picker-indicator]:invert dark:[&::-webkit-time-picker-indicator]:invert"
             />
           </div>
 
           {/* Durée */}
           <div>
-            <Label htmlFor="duration">Durée (optionnel)</Label>
+            <Label htmlFor="duration">Durée</Label>
             <div className="flex items-center gap-2 mt-2">
               <Input
                 id="duration"
@@ -288,32 +342,32 @@ export function HabitForm({
           {/* Période */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="startDate">Date de début</Label>
+              <Label htmlFor="startDate">Date de début *</Label>
               <Input
                 id="startDate"
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 max={endDate || undefined}
-                className="mt-2"
+                className="mt-2 dark:[&::-webkit-calendar-picker-indicator]:invert"
               />
             </div>
             <div>
-              <Label htmlFor="endDate">Date de fin (optionnel)</Label>
+              <Label htmlFor="endDate">Date de fin</Label>
               <Input
                 id="endDate"
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 min={startDate || undefined}
-                className="mt-2"
+                className="mt-2 dark:[&::-webkit-calendar-picker-indicator]:invert"
               />
             </div>
           </div>
 
           {/* Fréquence */}
           <div>
-            <Label>Fréquence</Label>
+            <Label>Fréquence *</Label>
             <div className="grid grid-cols-3 gap-2 mt-2">
               <button
                 type="button"
@@ -357,7 +411,7 @@ export function HabitForm({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
             >
-              <Label>Jours actifs</Label>
+              <Label>Jours actifs *</Label>
               <div className="grid grid-cols-7 gap-2 mt-2">
                 {DAYS.map((day, index) => {
                   const isActive = activeDays.includes(index);
@@ -380,6 +434,9 @@ export function HabitForm({
               </div>
             </motion.div>
           )}
+
+          {/* Mention champs obligatoires */}
+          <p className="text-xs text-muted-foreground">* : champ obligatoire</p>
 
           {/* Actions */}
           <div className="flex items-center justify-between gap-3 pt-2">
