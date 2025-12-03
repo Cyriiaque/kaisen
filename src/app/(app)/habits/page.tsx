@@ -80,6 +80,7 @@ async function HabitsContent() {
           : undefined,
         duration: habit.duration || undefined,
         reminderTime: habit.reminders[0]?.atTime || undefined,
+        notificationsEnabled: (habit as { notificationsEnabled?: boolean }).notificationsEnabled ?? false,
         };
       })}
     />

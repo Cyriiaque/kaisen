@@ -15,6 +15,7 @@ const HabitSchema = z.object({
   categoryName: z.string().optional(),
   time: z.string().optional(), // HH:mm format
   duration: z.string().optional(), // Durée de l'habitude
+  notificationsEnabled: z.string().optional(), // "true" | "false"
   startDate: z.string().optional(), // Date de début (YYYY-MM-DD)
   endDate: z.string().optional(), // Date de fin (YYYY-MM-DD)
 });
@@ -33,6 +34,7 @@ export async function createHabit(_: unknown, formData: FormData) {
     categoryName: formData.get("categoryName")?.toString() ?? undefined,
     time: formData.get("time")?.toString() ?? undefined,
     duration: formData.get("duration")?.toString() ?? undefined,
+    notificationsEnabled: formData.get("notificationsEnabled")?.toString() ?? undefined,
     startDate: formData.get("startDate")?.toString() ?? undefined,
     endDate: formData.get("endDate")?.toString() ?? undefined,
   });
@@ -51,6 +53,7 @@ export async function createHabit(_: unknown, formData: FormData) {
     categoryName,
     time,
     duration,
+    notificationsEnabled,
     startDate,
     endDate,
   } = parsed.data;
@@ -131,6 +134,7 @@ export async function createHabit(_: unknown, formData: FormData) {
       activeDays: finalActiveDays,
       categoryId,
       duration: duration || null,
+      notificationsEnabled: notificationsEnabled === "true",
       startDate: startDateValue,
       endDate: endDateValue,
     },
@@ -179,6 +183,7 @@ export async function updateHabit(
     categoryName: formData.get("categoryName")?.toString() ?? undefined,
     time: formData.get("time")?.toString() ?? undefined,
     duration: formData.get("duration")?.toString() ?? undefined,
+    notificationsEnabled: formData.get("notificationsEnabled")?.toString() ?? undefined,
     startDate: formData.get("startDate")?.toString() ?? undefined,
     endDate: formData.get("endDate")?.toString() ?? undefined,
   });
@@ -197,6 +202,7 @@ export async function updateHabit(
     categoryName,
     time,
     duration,
+    notificationsEnabled,
     startDate,
     endDate,
   } = parsed.data;
@@ -277,6 +283,7 @@ export async function updateHabit(
       activeDays: finalActiveDays,
       categoryId,
       duration: duration || null,
+      notificationsEnabled: notificationsEnabled === "true",
       startDate: startDateValue,
       endDate: endDateValue,
     },

@@ -2,7 +2,7 @@
 
 import { motion } from "motion/react";
 import { useState, useEffect, useActionState } from "react";
-import { User, Moon, Sun, Bell, LogOut, Trash2, AlertTriangle, Edit2, X, Check } from "lucide-react";
+import { User, Moon, Sun, LogOut, Trash2, AlertTriangle, Edit2, X, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Switch } from "@/components/ui/switch";
@@ -30,7 +30,6 @@ interface ProfileViewProps {
     email: string;
     avatar?: string;
     theme?: string;
-    notificationsEnabled?: boolean;
   };
 }
 
@@ -38,9 +37,6 @@ export function ProfileView({ user }: ProfileViewProps) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [isDark, setIsDark] = useState(user.theme === "dark");
-  const [notificationsEnabled, setNotificationsEnabled] = useState(
-    user.notificationsEnabled ?? true
-  );
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [deleteState, deleteFormAction, deletePending] = useActionState(deleteAccount, null);
   const [updateState, updateFormAction, updatePending] = useActionState(updateProfile, null);
@@ -101,20 +97,6 @@ export function ProfileView({ user }: ProfileViewProps) {
     updateFormData.append("email", formData.email || user.email || "");
     updateFormData.append("avatar", formData.avatar || user.avatar || "");
     updateFormData.append("theme", checked ? "dark" : "light");
-    updateFormData.append("notificationsEnabled", String(notificationsEnabled));
-    await updateProfile(null, updateFormData);
-    router.refresh();
-  };
-
-  const handleToggleNotifications = async (checked: boolean) => {
-    setNotificationsEnabled(checked);
-    // Sauvegarder immédiatement les notifications
-    const updateFormData = new FormData();
-    updateFormData.append("name", formData.name || user.name || "");
-    updateFormData.append("email", formData.email || user.email || "");
-    updateFormData.append("avatar", formData.avatar || user.avatar || "");
-    updateFormData.append("theme", isDark ? "dark" : "light");
-    updateFormData.append("notificationsEnabled", String(checked));
     await updateProfile(null, updateFormData);
     router.refresh();
   };
@@ -316,7 +298,6 @@ export function ProfileView({ user }: ProfileViewProps) {
                   }
                   
                   submitFormData.append("theme", isDark ? "dark" : "light");
-                  submitFormData.append("notificationsEnabled", String(notificationsEnabled));
                   
                   const result = await updateProfile(null, submitFormData);
                   setIsSubmitting(false);
@@ -404,26 +385,6 @@ export function ProfileView({ user }: ProfileViewProps) {
           </div>
         </div>
 
-        {/* Notifications */}
-        <div className="bg-card rounded-2xl p-4 shadow-sm border border-border">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center">
-                <Bell className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-foreground">Notifications</p>
-                <p className="text-muted-foreground text-sm">
-                  Rappels pour vos habitudes
-                </p>
-              </div>
-            </div>
-            <Switch
-              checked={notificationsEnabled}
-              onCheckedChange={handleToggleNotifications}
-            />
-          </div>
-        </div>
       </motion.div>
 
       {/* Actions */}

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -105,6 +106,9 @@ export function HabitForm({
   const [duration, setDuration] = useState<number | "">(
     habit?.duration ? parseInt(habit.duration, 10) || "" : ""
   );
+  const [notificationsEnabled, setNotificationsEnabled] = useState(
+    habit?.notificationsEnabled ?? false
+  );
   const [startDate, setStartDate] = useState(() => {
     if (habit?.startDate) {
       return habit.startDate.split("T")[0];
@@ -159,6 +163,7 @@ export function HabitForm({
     );
     formData.set("time", time || "");
     formData.set("duration", duration !== "" ? duration.toString() : "");
+    formData.set("notificationsEnabled", notificationsEnabled ? "true" : "false");
     formData.set("startDate", startDate || "");
     formData.set("endDate", endDate || "");
 
@@ -337,6 +342,21 @@ export function HabitForm({
                 minutes
               </span>
             </div>
+          </div>
+
+          {/* Notifications */}
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="notifications">Notifications</Label>
+              <p className="text-xs text-muted-foreground">
+                Recevoir une notification pour cette habitude
+              </p>
+            </div>
+            <Switch
+              id="notifications"
+              checked={notificationsEnabled}
+              onCheckedChange={setNotificationsEnabled}
+            />
           </div>
 
           {/* Période */}

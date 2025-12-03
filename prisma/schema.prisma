@@ -61,23 +61,24 @@ enum Frequency {
 }
 
 model Habit {
-  id          String     @id @default(cuid())
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String
-  name        String
-  description String?
-  color       String
-  frequency   Frequency
-  activeDays  String?    // ex: "[1,2,3,4,5]" pour Lun-Ven (JSON array)
-  category    Category?  @relation(fields: [categoryId], references: [id])
-  categoryId  String?
-  duration    String?    // Durée de l'habitude (ex: "10 minutes", "30 min")
-  startDate   DateTime?  // Date de début de l'habitude
-  endDate     DateTime?  // Date de fin de l'habitude
-  reminders   Reminder[]
-  logs        HabitLog[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id                   String     @id @default(cuid())
+  user                 User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId               String
+  name                 String
+  description          String?
+  color                String
+  frequency            Frequency
+  activeDays           String?    // ex: "[1,2,3,4,5]" pour Lun-Ven (JSON array)
+  category             Category?  @relation(fields: [categoryId], references: [id])
+  categoryId           String?
+  duration             String?    // Durée de l'habitude (ex: "10 minutes", "30 min")
+  startDate            DateTime?  // Date de début de l'habitude
+  endDate              DateTime?  // Date de fin de l'habitude
+  notificationsEnabled Boolean    @default(false) // Activer les notifications pour cette habitude
+  reminders            Reminder[]
+  logs                 HabitLog[]
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
 }
 
 model Reminder {

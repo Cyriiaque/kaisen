@@ -101,6 +101,7 @@ async function DashboardContent() {
       createdAt: habit.createdAt.toISOString(),
       reminderTime: habit.reminders[0]?.atTime || undefined,
       duration: (habit as { duration?: string | null }).duration || undefined,
+      notificationsEnabled: (habit as { notificationsEnabled?: boolean }).notificationsEnabled ?? false,
     };
   });
 

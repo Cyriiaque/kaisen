@@ -14,6 +14,7 @@ export interface Habit {
   endDate?: string;
   reminderTime?: string;
   duration?: string;
+  notificationsEnabled?: boolean;
 }
 
 export interface User {
