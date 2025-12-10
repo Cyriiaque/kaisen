@@ -13,16 +13,13 @@ export function AppHeader() {
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    // Détecter le thème initial
     const checkTheme = () => {
       const isDarkMode = document.documentElement.classList.contains("dark");
       setIsDark(isDarkMode);
     };
 
-    // Vérifier au montage
     checkTheme();
 
-    // Écouter les changements de thème
     const observer = new MutationObserver(() => {
       checkTheme();
     });
@@ -36,20 +33,15 @@ export function AppHeader() {
   }, []);
 
   useEffect(() => {
-    // Charger au montage
     tickNotifications();
 
-    // Un seul intervalle d'une minute qui fait les deux tâches
-    const interval = setInterval(tickNotifications, 60000); // 1 minute
+    const interval = setInterval(tickNotifications, 60000);
 
     return () => clearInterval(interval);
   }, []);
 
   const tickNotifications = async () => {
-    // Uniquement en développement pour éviter les appels inutiles en production
-    // (en production, le cron job s'occupe de la planification)
     if (process.env.NODE_ENV !== "development") {
-      // En production, on charge juste le compteur
       loadUnreadCount();
       return;
     }
@@ -73,7 +65,6 @@ export function AppHeader() {
       }
     } catch (error) {
       console.error("[AppHeader] Erreur lors du tick:", error);
-      // En cas d'erreur, essayer de charger juste le compteur
       loadUnreadCount();
     }
   };

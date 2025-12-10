@@ -19,10 +19,9 @@ export async function getNotifications() {
     orderBy: {
       createdAt: "desc",
     },
-    take: 50, // Limiter à 50 dernières notifications
+    take: 50,
   });
 
-  // Convertir les dates en strings pour la compatibilité avec le client
   return {
     notifications: notifications.map((notification) => ({
       ...notification,
@@ -93,10 +92,6 @@ export async function getUnreadNotificationsCount() {
   return { count };
 }
 
-/**
- * Action pour tester manuellement la création de notifications
- * Utile pour le développement et le débogage
- */
 export async function testScheduleNotifications() {
   const user = await getCurrentUser();
   if (!user) {
@@ -106,7 +101,6 @@ export async function testScheduleNotifications() {
   try {
     const now = new Date();
     
-    // Récupérer toutes les habitudes avec notifications activées de l'utilisateur
     const habits = await prisma.habit.findMany({
       where: {
         userId: user.id,
@@ -128,7 +122,6 @@ export async function testScheduleNotifications() {
     const notificationsCreated: string[] = [];
 
     for (const habit of habits) {
-      // Vérifier que l'habitude est active aujourd'hui
       const today = new Date();
       const dayOfWeek = today.getDay();
       const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
@@ -148,7 +141,6 @@ export async function testScheduleNotifications() {
       if (habit.logs.some((log) => log.done)) continue;
       if (!isActiveToday) continue;
 
-      // Vérifier si une notification n'a pas déjà été créée aujourd'hui
       const todayStart = new Date(today);
       todayStart.setHours(0, 0, 0, 0);
       const todayEnd = new Date(today);
@@ -170,7 +162,6 @@ export async function testScheduleNotifications() {
 
       if (existingNotification) continue;
 
-      // Déterminer l'heure de notification
       let notificationTime: Date | null = null;
       let reminderTime: string | null = null;
 
@@ -187,7 +178,6 @@ export async function testScheduleNotifications() {
         notificationTime.setHours(8, 0, 0, 0);
       }
 
-      // Vérifier si c'est le moment d'envoyer la notification
       const nowTime = new Date();
       const isNotificationTimePassed = notificationTime <= nowTime;
       const isSameDay = notificationTime.getDate() === nowTime.getDate() && 

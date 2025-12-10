@@ -48,14 +48,12 @@ export function Dashboard({ habits }: DashboardProps) {
     setEditingHabit(undefined);
   };
 
-  // Fonction pour vérifier si une habitude est active aujourd'hui
   const isHabitActiveToday = useMemo(() => {
     return (habit: Habit): boolean => {
       const today = new Date();
       today.setUTCHours(0, 0, 0, 0);
       const todayStr = today.toISOString().split("T")[0];
 
-      // Vérifier la période de validité (date de début / fin)
       const habitStart = new Date(habit.startDate || habit.createdAt);
       habitStart.setUTCHours(0, 0, 0, 0);
       if (today < habitStart) {
@@ -70,23 +68,19 @@ export function Dashboard({ habits }: DashboardProps) {
         }
       }
 
-      // Si l'habitude est quotidienne, elle est toujours active
       if (habit.frequency === "daily") {
         return true;
       }
 
-      // Habitude hebdomadaire : une fois par semaine
       if (habit.frequency === "weekly") {
         const checkDate = today;
 
-        // Début de la semaine (lundi)
         const weekStart = new Date(checkDate);
-        const day = weekStart.getUTCDay(); // 0 (dimanche) - 6 (samedi)
-        const diff = day === 0 ? -6 : 1 - day; // pour aller au lundi
+        const day = weekStart.getUTCDay();
+        const diff = day === 0 ? -6 : 1 - day;
         weekStart.setUTCDate(weekStart.getUTCDate() + diff);
         weekStart.setUTCHours(0, 0, 0, 0);
 
-        // Vérifier s'il y a déjà une complétion plus tôt dans la semaine
         const hasCompletedEarlierThisWeek =
           habit.completedDates?.some((dateStr) => {
             const completedDate = new Date(dateStr);
@@ -94,19 +88,15 @@ export function Dashboard({ habits }: DashboardProps) {
             return completedDate >= weekStart && completedDate < checkDate;
           }) ?? false;
 
-        // Active tous les jours jusqu'à la première complétion de la semaine
         return !hasCompletedEarlierThisWeek;
       }
 
-      // Habitude personnalisée : utiliser les jours actifs
       if (habit.frequency === "custom") {
         if (!habit.activeDays || habit.activeDays.length === 0) {
           return false;
         }
 
-        // Obtenir le jour actuel (0 = dimanche, 1 = lundi, ..., 6 = samedi en JS)
         const todayJs = new Date(todayStr).getDay();
-        // Convertir vers notre système (0 = lundi, 1 = mardi, ..., 6 = dimanche)
         const todayOurSystem = todayJs === 0 ? 6 : todayJs - 1;
 
         return habit.activeDays.includes(todayOurSystem);
@@ -123,7 +113,6 @@ export function Dashboard({ habits }: DashboardProps) {
 
   const filteredHabits = useMemo(() => {
     return habits.filter((habit) => {
-      // Filtrer d'abord par jour actif
       if (!isHabitActiveToday(habit)) {
         return false;
       }
@@ -139,7 +128,6 @@ export function Dashboard({ habits }: DashboardProps) {
 
   const todayStats = useMemo(() => {
     const today = new Date().toISOString().split("T")[0];
-    // Filtrer seulement les habitudes actives aujourd'hui pour les stats
     const activeHabitsToday = habits.filter((h) => isHabitActiveToday(h));
     const completed = activeHabitsToday.filter((h) =>
       h.completedDates?.includes(today),
@@ -151,7 +139,6 @@ export function Dashboard({ habits }: DashboardProps) {
 
   return (
     <div className="pb-24">
-      {/* Header avec stats du jour */}
       <Link href="/calendar">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -196,7 +183,6 @@ export function Dashboard({ habits }: DashboardProps) {
         </motion.div>
       </Link>
 
-      {/* Barre de recherche */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -215,7 +201,6 @@ export function Dashboard({ habits }: DashboardProps) {
         </div>
       </motion.div>
 
-      {/* Filtres par catégorie */}
       {categories.length > 0 && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -257,7 +242,6 @@ export function Dashboard({ habits }: DashboardProps) {
         </motion.div>
       )}
 
-      {/* Liste des habitudes */}
       <div className="space-y-3">
         <AnimatePresence mode="popLayout">
           {filteredHabits.length > 0 ? (
@@ -285,19 +269,16 @@ export function Dashboard({ habits }: DashboardProps) {
         </AnimatePresence>
       </div>
 
-      {/* Formulaire d'habitude (édition uniquement) */}
       <AnimatePresence>
         {showHabitForm && (
           <HabitForm
             habit={editingHabit}
             onSave={() => {
-              // Cette fonction sera gérée par HabitForm avec les actions serveur
               handleCloseForm();
               router.refresh();
             }}
             onClose={handleCloseForm}
             onDelete={editingHabit ? async () => {
-              // Suppression gérée par HabitForm
               handleCloseForm();
               router.refresh();
             } : undefined}

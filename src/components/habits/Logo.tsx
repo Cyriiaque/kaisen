@@ -11,13 +11,11 @@ export function Logo({ className = "", isDark }: LogoProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
-    // Si isDark est fourni explicitement, l'utiliser
     if (isDark !== undefined) {
       setIsDarkMode(isDark);
       return;
     }
 
-    // Sinon, détecter automatiquement le thème
     const checkTheme = () => {
       const dark = document.documentElement.classList.contains("dark");
       setIsDarkMode(dark);
@@ -25,7 +23,6 @@ export function Logo({ className = "", isDark }: LogoProps) {
 
     checkTheme();
 
-    // Écouter les changements de thème
     const observer = new MutationObserver(() => {
       checkTheme();
     });

@@ -112,7 +112,6 @@ export function NotificationsOverlay({
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Overlay backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -121,7 +120,6 @@ export function NotificationsOverlay({
             className="fixed inset-0 bg-black/50 z-[100]"
           />
           
-          {/* Overlay content */}
           <motion.div
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
@@ -129,7 +127,6 @@ export function NotificationsOverlay({
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
             className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-background shadow-xl z-[101] flex flex-col"
           >
-            {/* Header */}
             <div className="sticky top-0 bg-background border-b border-border px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Bell className="w-5 h-5 text-foreground" />
@@ -163,7 +160,6 @@ export function NotificationsOverlay({
               </div>
             </div>
 
-            {/* Notifications list */}
             <div className="flex-1 overflow-y-auto px-6 py-4">
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">

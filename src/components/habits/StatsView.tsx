@@ -44,20 +44,16 @@ export function StatsView({ habits }: StatsViewProps) {
   const stats = useMemo(() => {
     const today = new Date().toISOString().split("T")[0];
 
-    // Fonction pour vérifier si une habitude est active un jour donné
     const isHabitActiveOnDate = (habit: Habit, dateStr: string): boolean => {
-      // Vérifier d'abord si l'habitude était dans sa période de validité à cette date
       const habitStart = new Date(habit.startDate || habit.createdAt);
       habitStart.setUTCHours(0, 0, 0, 0);
       const checkDate = new Date(dateStr);
       checkDate.setUTCHours(0, 0, 0, 0);
 
-      // Si la date est avant le début de l'habitude, elle n'est pas active
       if (habitStart > checkDate) {
         return false;
       }
 
-      // Si une date de fin est définie et dépassée, l'habitude n'est plus active
       if (habit.endDate) {
         const habitEnd = new Date(habit.endDate);
         habitEnd.setUTCHours(23, 59, 59, 999);
@@ -66,29 +62,24 @@ export function StatsView({ habits }: StatsViewProps) {
         }
       }
 
-      // Si l'habitude est quotidienne, elle est active si elle existait déjà
       if (habit.frequency === "daily") {
         return true;
       }
 
-      // Habitude hebdomadaire : une fois par semaine
       if (habit.frequency === "weekly") {
         const todayDateObj = new Date(today);
         todayDateObj.setUTCHours(0, 0, 0, 0);
 
-        // Ne pas considérer les dates dans le futur
         if (checkDate > todayDateObj) {
           return false;
         }
 
-        // Début de la semaine (lundi)
         const weekStart = new Date(checkDate);
-        const day = weekStart.getUTCDay(); // 0 (dimanche) - 6 (samedi)
-        const diff = day === 0 ? -6 : 1 - day; // pour aller au lundi
+        const day = weekStart.getUTCDay();
+        const diff = day === 0 ? -6 : 1 - day;
         weekStart.setUTCDate(weekStart.getUTCDate() + diff);
         weekStart.setUTCHours(0, 0, 0, 0);
 
-        // Vérifier s'il y a déjà une complétion plus tôt dans la semaine
         const hasCompletedEarlierThisWeek =
           habit.completedDates?.some((date) => {
             const completedDate = new Date(date);
@@ -96,19 +87,15 @@ export function StatsView({ habits }: StatsViewProps) {
             return completedDate >= weekStart && completedDate < checkDate;
           }) ?? false;
 
-        // Active tous les jours jusqu'à la première complétion de la semaine
         return !hasCompletedEarlierThisWeek;
       }
 
-      // Habitude personnalisée : utiliser les jours actifs
       if (habit.frequency === "custom") {
         if (!habit.activeDays || habit.activeDays.length === 0) {
           return false;
         }
 
-        // Obtenir le jour de la date (0 = dimanche, 1 = lundi, ..., 6 = samedi en JS)
         const dateJs = new Date(dateStr).getDay();
-        // Convertir vers notre système (0 = lundi, 1 = mardi, ..., 6 = dimanche)
         const dayOurSystem = dateJs === 0 ? 6 : dateJs - 1;
 
         return habit.activeDays.includes(dayOurSystem);
@@ -117,7 +104,6 @@ export function StatsView({ habits }: StatsViewProps) {
       return true;
     };
 
-    // Filtrer les habitudes actives aujourd'hui
     const activeHabitsToday = habits.filter((h) =>
       isHabitActiveOnDate(h, today),
     );
@@ -133,7 +119,6 @@ export function StatsView({ habits }: StatsViewProps) {
       0,
     );
 
-    // Calculer la période de début selon la sélection
     const todayDateObj = new Date(today);
     todayDateObj.setUTCHours(0, 0, 0, 0);
     const startDate = new Date(todayDateObj);
@@ -146,7 +131,6 @@ export function StatsView({ habits }: StatsViewProps) {
       startDate.setFullYear(startDate.getFullYear() - 1);
     }
 
-    // Calculer le total de jours possibles pour la période sélectionnée
     let totalPossible = 0;
     let totalCompletedInPeriod = 0;
 
@@ -157,7 +141,6 @@ export function StatsView({ habits }: StatsViewProps) {
         Math.max(habitStart.getTime(), startDate.getTime()),
       );
       
-      // Parcourir tous les jours de la période
       const currentDate = new Date(periodStart);
       const habitEnd =
         habit.endDate && habit.endDate.trim() !== ""
@@ -180,13 +163,11 @@ export function StatsView({ habits }: StatsViewProps) {
       }
     });
 
-    // Taux de réussite pour la période sélectionnée
     const completionRate =
       totalPossible > 0
         ? Math.round((totalCompletedInPeriod / totalPossible) * 100)
         : 0;
 
-    // Générer les données pour le graphique selon la période
     let chartData: Array<{
       label: string;
       completed: number;
@@ -195,7 +176,6 @@ export function StatsView({ habits }: StatsViewProps) {
     }> = [];
 
     if (period === "week") {
-      // 7 jours
       const days = Array.from({ length: 7 }, (_, i) => {
       const date = new Date();
       date.setDate(date.getDate() - (6 - i));
@@ -227,7 +207,6 @@ export function StatsView({ habits }: StatsViewProps) {
       };
     });
     } else if (period === "month") {
-      // ~30 jours, regroupés par semaine
       const weeks: string[][] = [];
       const currentWeek: string[] = [];
       const today = new Date();
@@ -266,7 +245,6 @@ export function StatsView({ habits }: StatsViewProps) {
         };
       });
     } else if (period === "year") {
-      // 12 mois
       const months: Array<{ start: Date; end: Date; label: string }> = [];
       const today = new Date();
       
@@ -289,7 +267,6 @@ export function StatsView({ habits }: StatsViewProps) {
         
         const currentDate = new Date(month.start);
         currentDate.setUTCHours(0, 0, 0, 0);
-        // Pour le mois actuel, aller jusqu'à aujourd'hui inclus, sinon jusqu'à la fin du mois
         const isCurrentMonth = 
           month.start.getMonth() === todayDateObj.getMonth() &&
           month.start.getFullYear() === todayDateObj.getFullYear();
@@ -362,7 +339,6 @@ export function StatsView({ habits }: StatsViewProps) {
 
   return (
     <div className="pb-24">
-      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -372,7 +348,6 @@ export function StatsView({ habits }: StatsViewProps) {
         <p className="text-muted-foreground">Suivez vos progrès</p>
       </motion.div>
 
-      {/* Taux de complétion */}
       <Link href="/calendar">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -397,7 +372,6 @@ export function StatsView({ habits }: StatsViewProps) {
         </motion.div>
       </Link>
 
-      {/* Graphique */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -534,7 +508,6 @@ export function StatsView({ habits }: StatsViewProps) {
         </ResponsiveContainer>
       </motion.div>
 
-      {/* Cartes statistiques */}
       <div className="grid grid-cols-2 gap-3 mb-6">
         {statCards.map((stat, index) => (
           <motion.div
@@ -555,7 +528,6 @@ export function StatsView({ habits }: StatsViewProps) {
         ))}
       </div>
 
-      {/* Habitudes par catégorie */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -577,7 +549,7 @@ export function StatsView({ habits }: StatsViewProps) {
               return acc;
             }, {} as Record<string, { count: number; color: string }>),
           )
-            .sort(([, a], [, b]) => b.count - a.count) // Trier par nombre décroissant
+            .sort(([, a], [, b]) => b.count - a.count)
             .map(([category, data]) => {
             const colorClasses: Record<string, string> = {
               purple: "from-purple-400 to-purple-600",

@@ -24,14 +24,11 @@ export function CalendarView({ habits }: CalendarViewProps) {
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
     
-    // getDay() retourne 0 (dimanche) à 6 (samedi)
-    // On ajuste pour commencer par lundi (0 = lundi, 6 = dimanche)
     let startingDayOfWeek = firstDay.getDay() - 1;
-    if (startingDayOfWeek < 0) startingDayOfWeek = 6; // Si dimanche, on met à 6
+    if (startingDayOfWeek < 0) startingDayOfWeek = 6;
 
     const days: { date: Date; isCurrentMonth: boolean }[] = [];
     
-    // Jours du mois précédent pour compléter la première semaine
     if (startingDayOfWeek > 0) {
       const prevMonth = month === 0 ? 11 : month - 1;
       const prevYear = month === 0 ? year - 1 : year;
@@ -43,14 +40,11 @@ export function CalendarView({ habits }: CalendarViewProps) {
       }
     }
     
-    // Jours du mois actuel
     for (let i = 1; i <= daysInMonth; i++) {
       const date = new Date(year, month, i);
       days.push({ date, isCurrentMonth: true });
     }
     
-    // Jours du mois suivant pour compléter la dernière semaine
-    // On complète jusqu'à avoir un nombre de jours multiple de 7 (semaines complètes)
     const totalDays = days.length;
     const weeks = Math.ceil(totalDays / 7);
     const targetDays = weeks * 7;
@@ -78,20 +72,16 @@ export function CalendarView({ habits }: CalendarViewProps) {
     );
   };
 
-  // Fonction pour vérifier si une habitude est active un jour donné
   const isHabitActiveOnDate = (habit: Habit, dateStr: string): boolean => {
-    // Vérifier d'abord si l'habitude était dans sa période de validité à cette date
     const habitStart = new Date(habit.startDate || habit.createdAt);
     habitStart.setUTCHours(0, 0, 0, 0);
     const checkDate = new Date(dateStr);
     checkDate.setUTCHours(0, 0, 0, 0);
 
-    // Si la date est avant le début de l'habitude, elle n'est pas active
     if (habitStart > checkDate) {
       return false;
     }
 
-    // Si une date de fin est définie et dépassée, l'habitude n'est plus active
     if (habit.endDate) {
       const habitEnd = new Date(habit.endDate);
       habitEnd.setUTCHours(23, 59, 59, 999);
@@ -100,26 +90,21 @@ export function CalendarView({ habits }: CalendarViewProps) {
       }
     }
 
-    // Si l'habitude est quotidienne, elle est active si elle existait déjà
     if (habit.frequency === "daily") {
       return true;
     }
 
-    // Habitude hebdomadaire : une fois par semaine
     if (habit.frequency === "weekly") {
-      // Début de la semaine (lundi) pour la date donnée
       const weekStart = new Date(checkDate);
-      const day = weekStart.getUTCDay(); // 0 (dimanche) - 6 (samedi)
-      const diff = day === 0 ? -6 : 1 - day; // pour aller au lundi
+      const day = weekStart.getUTCDay();
+      const diff = day === 0 ? -6 : 1 - day;
       weekStart.setUTCDate(weekStart.getUTCDate() + diff);
       weekStart.setUTCHours(0, 0, 0, 0);
 
-      // Fin de la semaine (dimanche)
       const weekEnd = new Date(weekStart);
       weekEnd.setUTCDate(weekEnd.getUTCDate() + 6);
       weekEnd.setUTCHours(23, 59, 59, 999);
 
-      // Chercher toutes les complétions de cette semaine
       const completionsThisWeek =
         habit.completedDates
           ?.map((date) => {
@@ -130,29 +115,22 @@ export function CalendarView({ habits }: CalendarViewProps) {
           .filter((d) => d >= weekStart && d <= weekEnd) ?? [];
 
       if (completionsThisWeek.length === 0) {
-        // Pas de complétion cette semaine : pastille vide tous les jours de la semaine
         return true;
       }
 
-      // Première complétion de la semaine
       const firstCompletion = completionsThisWeek.reduce((min, d) =>
         d < min ? d : min,
       completionsThisWeek[0]);
 
-      // Active pour tous les jours jusqu'au jour de complétion (inclus),
-      // plus de pastille après.
       return checkDate <= firstCompletion;
     }
 
-    // Habitude personnalisée : utiliser les jours actifs
     if (habit.frequency === "custom") {
       if (!habit.activeDays || habit.activeDays.length === 0) {
         return false;
       }
 
-      // Obtenir le jour de la date (0 = dimanche, 1 = lundi, ..., 6 = samedi en JS)
       const dateJs = new Date(dateStr).getDay();
-      // Convertir vers notre système (0 = lundi, 1 = mardi, ..., 6 = dimanche)
       const dayOurSystem = dateJs === 0 ? 6 : dateJs - 1;
 
       return habit.activeDays.includes(dayOurSystem);
@@ -178,8 +156,6 @@ export function CalendarView({ habits }: CalendarViewProps) {
   }, [habits, searchQuery, selectedCategory]);
 
   const getCompletionForDate = (date: Date) => {
-    // Les dates sont stockées en UTC à minuit dans la base de données
-    // On doit donc convertir la date locale en UTC pour la comparaison
     const utcDate = new Date(
       Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
     );
@@ -187,7 +163,6 @@ export function CalendarView({ habits }: CalendarViewProps) {
     
     let habitsToCheck = filteredHabits;
     
-    // Filtrer les habitudes actives ce jour-là (qui existaient déjà et sont actives)
     habitsToCheck = habitsToCheck.filter((h) =>
       isHabitActiveOnDate(h, dateString),
     );
@@ -199,7 +174,6 @@ export function CalendarView({ habits }: CalendarViewProps) {
     const completed = completedHabits.length;
     const total = habitsToCheck.length;
     
-    // Toutes les habitudes actives (complétées et non complétées)
     const allActiveHabits = habitsToCheck.map((h) => ({
       id: h.id,
       color: h.color,
@@ -242,8 +216,7 @@ export function CalendarView({ habits }: CalendarViewProps) {
   };
 
   return (
-    <div className="pb-24">
-      {/* Header */}
+    <div className="pb-24 overflow-x-hidden">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -253,7 +226,6 @@ export function CalendarView({ habits }: CalendarViewProps) {
         <p className="text-muted-foreground">Visualisez vos progrès</p>
       </motion.div>
 
-      {/* Barre de recherche */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -272,7 +244,6 @@ export function CalendarView({ habits }: CalendarViewProps) {
         </div>
       </motion.div>
 
-      {/* Filtres par catégorie */}
       {categories.length > 0 && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -314,23 +285,22 @@ export function CalendarView({ habits }: CalendarViewProps) {
         </motion.div>
       )}
 
-      {/* Calendrier */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-card rounded-2xl p-4 shadow-sm border border-border"
+        className="bg-card rounded-2xl p-2 sm:p-4 shadow-sm border border-border overflow-hidden"
       >
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
           <button
             type="button"
             onClick={previousMonth}
-            className="w-8 h-8 rounded-full flex items-center justify-center bg-muted"
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-muted flex-shrink-0"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <div className="text-center">
-            <p className="text-foreground font-medium">
+          <div className="text-center flex-1 min-w-0 px-2">
+            <p className="text-foreground font-medium text-sm sm:text-base truncate">
               {currentDate.toLocaleDateString("fr-FR", {
                 month: "long",
                 year: "numeric",
@@ -340,21 +310,21 @@ export function CalendarView({ habits }: CalendarViewProps) {
           <button
             type="button"
             onClick={nextMonth}
-            className="w-8 h-8 rounded-full flex items-center justify-center bg-muted"
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-muted flex-shrink-0"
           >
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="grid grid-cols-7 gap-2 text-center text-xs text-muted-foreground mb-2">
+        <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center text-xs text-muted-foreground mb-1 sm:mb-2">
           {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((day) => (
-            <div key={day} className="font-medium">
+            <div key={day} className="font-medium truncate">
               {day}
             </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-2">
+        <div className="grid grid-cols-7 gap-1 sm:gap-2">
           {calendarData.map(({ date, isCurrentMonth }) => {
             const { allActiveHabits } = getCompletionForDate(date);
             const isToday =
@@ -368,31 +338,30 @@ export function CalendarView({ habits }: CalendarViewProps) {
                 key={date.toISOString()}
                 type="button"
                 onClick={() => setSelectedDay(date)}
-                className={`aspect-square rounded-xl flex flex-col items-center justify-center text-xs ${
+                className={`aspect-square rounded-lg sm:rounded-xl flex flex-col items-center justify-center text-xs min-w-0 ${
                   isCurrentMonth ? "" : "opacity-30"
                 }`}
               >
                 <div
-                  className={`w-full h-full rounded-xl flex flex-col items-center justify-center bg-muted relative ${
-                    isToday ? "ring-2 ring-offset-2 ring-foreground" : ""
-                  } ${isSelected ? "outline outline-2 outline-offset-2 outline-primary" : ""}`}
+                  className={`w-full h-full rounded-lg sm:rounded-xl flex flex-col items-center justify-center bg-muted relative overflow-hidden ${
+                    isToday ? "ring-1 sm:ring-2 ring-offset-1 sm:ring-offset-2 ring-foreground" : ""
+                  } ${isSelected ? "outline outline-1 sm:outline-2 outline-offset-1 sm:outline-offset-2 outline-primary" : ""}`}
                 >
-                  <span className="text-sm text-foreground mb-1">
+                  <span className="text-xs sm:text-sm text-foreground mb-0.5 sm:mb-1 leading-none">
                     {date.getDate()}
                   </span>
                   
-                  {/* Pastilles de couleur pour les habitudes actives */}
                   {allActiveHabits.length > 0 && (
-                    <div className="flex flex-wrap gap-1 justify-center items-center max-w-full px-1">
+                    <div className="flex flex-wrap gap-0.5 sm:gap-1 justify-center items-center max-w-full px-0.5 sm:px-1 w-full">
                       {allActiveHabits.slice(0, 4).map((habit) => (
                         <div
                           key={habit.id}
-                          className={`w-2 h-2 rounded-full ${
+                          className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0 ${
                             habit.isCompleted
                               ? `bg-gradient-to-br ${
                                   colorClasses[habit.color] || colorClasses.purple
                                 }`
-                              : `border-2 ${
+                              : `border border-[1.5px] sm:border-2 ${
                                   borderColorClasses[habit.color] || borderColorClasses.purple
                                 } bg-transparent opacity-60`
                           }`}
@@ -400,7 +369,7 @@ export function CalendarView({ habits }: CalendarViewProps) {
                         />
                       ))}
                       {allActiveHabits.length > 4 && (
-                        <span className="text-[8px] text-muted-foreground">
+                        <span className="text-[7px] sm:text-[8px] text-muted-foreground leading-none">
                           +{allActiveHabits.length - 4}
                         </span>
                       )}
@@ -413,7 +382,6 @@ export function CalendarView({ habits }: CalendarViewProps) {
         </div>
       </motion.div>
 
-      {/* Détails du jour sélectionné */}
       {selectedDay && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}

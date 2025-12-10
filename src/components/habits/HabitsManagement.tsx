@@ -101,7 +101,6 @@ export function HabitsManagement({
 
   return (
     <div className="pb-24 space-y-6">
-      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -113,7 +112,6 @@ export function HabitsManagement({
         </p>
       </motion.div>
 
-      {/* Gestion des catégories */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -126,7 +124,6 @@ export function HabitsManagement({
           </span>
         </div>
 
-        {/* Bouton pour créer une catégorie */}
         <Button
           type="button"
           className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white"
@@ -136,7 +133,6 @@ export function HabitsManagement({
           Créer une catégorie
         </Button>
 
-        {/* Liste des catégories existantes */}
         <div className="space-y-2 pt-2">
           {categories.map((category) => (
             <button
@@ -168,7 +164,6 @@ export function HabitsManagement({
         </div>
       </motion.div>
 
-      {/* Gestion des habitudes */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -181,7 +176,6 @@ export function HabitsManagement({
           </span>
         </div>
 
-        {/* Bouton pour créer une habitude */}
         <Button
           type="button"
           className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white mb-3"
@@ -191,7 +185,6 @@ export function HabitsManagement({
           Créer une habitude
         </Button>
 
-        {/* Liste des habitudes */}
         <div className="space-y-2">
           {habits.map((habit) => (
             <button
@@ -243,7 +236,6 @@ export function HabitsManagement({
         </div>
       </motion.div>
 
-      {/* Modals */}
       {showCategoryForm && (
         <CategoryForm
           category={editingCategory}

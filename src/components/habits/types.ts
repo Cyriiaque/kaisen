@@ -6,9 +6,9 @@ export interface Habit {
   category: string;
   categoryColor?: string;
   frequency: "daily" | "weekly" | "custom";
-  activeDays?: number[]; // 0-6 for Monday-Sunday
+  activeDays?: number[];
   streak: number;
-  completedDates?: string[]; // ISO date strings
+  completedDates?: string[];
   createdAt: string;
   startDate?: string;
   endDate?: string;

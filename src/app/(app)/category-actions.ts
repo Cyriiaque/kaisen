@@ -113,7 +113,6 @@ export async function deleteCategory(id: string) {
   }
 
   try {
-  // Détacher les habitudes de cette catégorie avant suppression
   await prisma.$transaction([
     prisma.habit.updateMany({
         where: { categoryId: id, userId: user.id },

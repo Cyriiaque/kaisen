@@ -46,7 +46,6 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-lg space-y-6">
-        {/* Header avec logo et gradient */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -69,7 +68,6 @@ export default function LoginPage() {
           </motion.div>
         </motion.div>
 
-        {/* Message de confirmation de suppression */}
         <Suspense fallback={null}>
           <DeletedMessage />
         </Suspense>
@@ -126,7 +124,6 @@ export default function LoginPage() {
           </div>
         </motion.form>
 
-        {/* Lien vers signup */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

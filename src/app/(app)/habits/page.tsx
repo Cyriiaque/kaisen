@@ -50,7 +50,6 @@ async function HabitsContent() {
     <HabitsManagement
       categories={categories}
       habits={habits.map((habit) => {
-        // Récupérer les dates en utilisant un accès sécurisé
         const habitWithDates = habit as typeof habit & {
           startDate?: Date | null;
           endDate?: Date | null;

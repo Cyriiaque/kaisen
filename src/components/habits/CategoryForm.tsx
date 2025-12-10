@@ -143,7 +143,6 @@ export function CategoryForm({
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            {/* Nom */}
             <div>
               <Label htmlFor="category-name">Nom de la catégorie</Label>
               <Input
@@ -156,7 +155,6 @@ export function CategoryForm({
               />
             </div>
 
-            {/* Couleur */}
             <div>
               <Label>Couleur</Label>
               <div className="grid grid-cols-4 gap-3 mt-2">
@@ -191,7 +189,6 @@ export function CategoryForm({
               </div>
             </div>
 
-            {/* Actions */}
             <div className="flex items-center justify-between gap-3 pt-2">
               {category && onDelete ? (
                 <Button

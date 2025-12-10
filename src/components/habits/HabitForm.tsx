@@ -73,19 +73,16 @@ export function HabitForm({
   onClose,
   onDelete,
 }: HabitFormProps) {
-  // Normaliser les catégories pour avoir un format uniforme
   const normalizedCategories = useMemo(() => {
     if (!categories || categories.length === 0) return DEFAULT_CATEGORIES.map(name => ({ name, color: "purple" }));
     
     if (typeof categories[0] === "string") {
-      // Si c'est un tableau de strings, créer des objets avec couleur par défaut
       return (categories as string[]).map(name => ({
         name,
         color: categoryColors?.[name] || "purple",
       }));
     }
     
-    // Si c'est déjà un tableau d'objets
     return categories as { name: string; color: string }[];
   }, [categories, categoryColors]);
   const [name, setName] = useState(habit?.name || "");
@@ -99,10 +96,7 @@ export function HabitForm({
   const [activeDays, setActiveDays] = useState<number[]>(
     habit?.activeDays || [0, 1, 2, 3, 4, 5, 6],
   );
-  // Pour l'heure, on récupère depuis reminderTime si disponible
   const [time, setTime] = useState(habit?.reminderTime || "");
-  // Pour la durée, on récupère depuis l'habitude si disponible (en minutes)
-  // On parse la valeur si elle existe (car stockée comme string en base)
   const [duration, setDuration] = useState<number | "">(
     habit?.duration ? parseInt(habit.duration, 10) || "" : ""
   );
@@ -135,7 +129,6 @@ export function HabitForm({
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    // Validation côté client
     if (!name.trim()) {
       toast.error("Le nom de l'habitude est requis");
       return;
@@ -146,7 +139,6 @@ export function HabitForm({
       return;
     }
 
-    // Validation des dates : la date de début ne peut pas être supérieure à la date de fin
     if (startDate && endDate && startDate > endDate) {
       toast.error("La date de début ne peut pas être supérieure à la date de fin");
       return;
@@ -233,7 +225,6 @@ export function HabitForm({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[calc(90vh-80px)] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50 dark:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/40 dark:hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/60">
-          {/* Nom */}
           <div>
             <Label htmlFor="name">Nom de l&apos;habitude *</Label>
             <Input
@@ -246,7 +237,6 @@ export function HabitForm({
             />
           </div>
 
-          {/* Description */}
           <div>
             <Label htmlFor="description">Description</Label>
             <Textarea
@@ -259,7 +249,6 @@ export function HabitForm({
             />
           </div>
 
-          {/* Catégorie */}
           <div>
             <Label htmlFor="category">Catégorie *</Label>
             <Select value={category} onValueChange={setCategory}>
@@ -302,7 +291,6 @@ export function HabitForm({
             </Select>
           </div>
 
-          {/* Heure */}
           <div>
             <Label htmlFor="time">Heure</Label>
             <Input
@@ -314,7 +302,6 @@ export function HabitForm({
             />
           </div>
 
-          {/* Durée */}
           <div>
             <Label htmlFor="duration">Durée</Label>
             <div className="flex items-center gap-2 mt-2">
@@ -344,7 +331,6 @@ export function HabitForm({
             </div>
           </div>
 
-          {/* Notifications */}
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
               <Label htmlFor="notifications">Notifications</Label>
@@ -359,7 +345,6 @@ export function HabitForm({
             />
           </div>
 
-          {/* Période */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label htmlFor="startDate">Date de début *</Label>
@@ -385,7 +370,6 @@ export function HabitForm({
             </div>
           </div>
 
-          {/* Fréquence */}
           <div>
             <Label>Fréquence *</Label>
             <div className="grid grid-cols-3 gap-2 mt-2">
@@ -425,7 +409,6 @@ export function HabitForm({
             </div>
           </div>
 
-          {/* Jours actifs (uniquement pour les fréquences personnalisées) */}
           {frequency === "custom" && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
@@ -455,10 +438,8 @@ export function HabitForm({
             </motion.div>
           )}
 
-          {/* Mention champs obligatoires */}
           <p className="text-xs text-muted-foreground">* : champ obligatoire</p>
 
-          {/* Actions */}
           <div className="flex items-center justify-between gap-3 pt-2">
             {habit && onDelete ? (
               <Button

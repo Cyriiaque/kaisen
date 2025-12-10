@@ -43,7 +43,6 @@ export function ProfileView({ user }: ProfileViewProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Form state
   const [formData, setFormData] = useState({
     name: user.name || "",
     email: user.email || "",
@@ -53,17 +52,14 @@ export function ProfileView({ user }: ProfileViewProps) {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   
-  // Vérifier si l'email a changé
   const emailChanged = formData.email !== user.email;
 
   useEffect(() => {
-    // Initialiser le thème depuis la DB ou localStorage
     const savedTheme = user.theme || window.localStorage.getItem("kaisen_theme") || "light";
     setIsDark(savedTheme === "dark");
   }, [user.theme]);
 
   useEffect(() => {
-    // Appliquer le thème au document
     if (isDark) {
       document.documentElement.classList.add("dark");
     } else {
@@ -73,14 +69,12 @@ export function ProfileView({ user }: ProfileViewProps) {
   }, [isDark]);
 
   useEffect(() => {
-    // Fermer le dialog si la suppression réussit (redirection)
     if (deleteState && !deleteState.error) {
       setOpenDeleteDialog(false);
     }
   }, [deleteState]);
 
   useEffect(() => {
-    // Si la mise à jour réussit, recharger la page
     if (updateState?.success) {
       router.refresh();
       setIsEditing(false);
@@ -91,7 +85,6 @@ export function ProfileView({ user }: ProfileViewProps) {
 
   const handleToggleTheme = async (checked: boolean) => {
     setIsDark(checked);
-    // Sauvegarder immédiatement le thème
     const updateFormData = new FormData();
     updateFormData.append("name", formData.name || user.name || "");
     updateFormData.append("email", formData.email || user.email || "");
@@ -117,7 +110,6 @@ export function ProfileView({ user }: ProfileViewProps) {
     const file = e.target.files?.[0];
     if (file) {
       setAvatarFile(file);
-      // Créer un aperçu
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatarPreview(reader.result as string);
@@ -128,7 +120,6 @@ export function ProfileView({ user }: ProfileViewProps) {
 
   return (
     <div className="pb-24">
-      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -138,7 +129,6 @@ export function ProfileView({ user }: ProfileViewProps) {
         <p className="text-muted-foreground">Gérez vos préférences</p>
       </motion.div>
 
-      {/* Carte profil */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -157,7 +147,6 @@ export function ProfileView({ user }: ProfileViewProps) {
         )}
         
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-          {/* Photo de profil */}
           <div className="relative flex-shrink-0">
             <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-white/20 backdrop-blur-sm flex items-center justify-center ring-2 ring-white/30 shadow-lg">
               {avatarPreview ? (
@@ -193,7 +182,6 @@ export function ProfileView({ user }: ProfileViewProps) {
             )}
           </div>
 
-          {/* Informations */}
           <div className="flex-1 w-full">
             {isEditing ? (
               <div className="space-y-4">
@@ -282,7 +270,6 @@ export function ProfileView({ user }: ProfileViewProps) {
                   submitFormData.append("email", formData.email);
                   submitFormData.append("avatar", formData.avatar || user.avatar || "");
                   
-                  // Ajouter le mot de passe si l'email a changé
                   if (emailChanged) {
                     if (!password) {
                       setSubmitError("Le mot de passe est requis pour changer l'email");
@@ -292,7 +279,6 @@ export function ProfileView({ user }: ProfileViewProps) {
                     submitFormData.append("password", password);
                   }
                   
-                  // Ajouter le fichier si présent
                   if (avatarFile) {
                     submitFormData.append("avatarFile", avatarFile);
                   }
@@ -303,27 +289,21 @@ export function ProfileView({ user }: ProfileViewProps) {
                   setIsSubmitting(false);
                   
                   if (result?.success) {
-                    // Mettre à jour formData avec le nouveau chemin d'avatar si disponible
                     if (result.avatar) {
                       setFormData((prev) => ({
                         ...prev,
                         avatar: result.avatar || prev.avatar,
                       }));
-                      // Réinitialiser l'aperçu pour utiliser le vrai chemin du serveur
                       setAvatarPreview(null);
                     } else {
-                      // Si pas de nouveau chemin, réinitialiser l'aperçu
                       setAvatarPreview(null);
                     }
                     
-                    // Fermer le mode édition
                     setIsEditing(false);
                     
-                    // Réinitialiser le fichier et le mot de passe
                     setAvatarFile(null);
                     setPassword("");
                     
-                    // Recharger les données du serveur pour synchroniser
                     router.refresh();
                   } else if (result?.error) {
                     setSubmitError(result.error);
@@ -352,7 +332,6 @@ export function ProfileView({ user }: ProfileViewProps) {
         )}
       </motion.div>
 
-      {/* Paramètres */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -361,7 +340,6 @@ export function ProfileView({ user }: ProfileViewProps) {
       >
         <h3 className="text-foreground mb-3">Préférences</h3>
 
-        {/* Thème */}
         <div className="bg-card rounded-2xl p-4 shadow-sm border border-border">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -387,7 +365,6 @@ export function ProfileView({ user }: ProfileViewProps) {
 
       </motion.div>
 
-      {/* Actions */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -500,7 +477,6 @@ export function ProfileView({ user }: ProfileViewProps) {
         </AlertDialog>
       </motion.div>
 
-      {/* Footer */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

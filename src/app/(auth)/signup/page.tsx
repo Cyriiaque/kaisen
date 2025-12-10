@@ -14,7 +14,6 @@ export default function SignupPage() {
   return (
     <main className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-lg space-y-6">
-        {/* Header avec logo et gradient */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -37,7 +36,6 @@ export default function SignupPage() {
           </motion.div>
         </motion.div>
 
-        {/* Formulaire */}
         <motion.form
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -103,7 +101,6 @@ export default function SignupPage() {
           </div>
         </motion.form>
 
-        {/* Lien vers login */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

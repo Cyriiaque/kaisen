@@ -11,13 +11,13 @@ const HabitSchema = z.object({
   name: z.string().min(1, "Le nom de l'habitude est requis"),
   description: z.string().optional(),
   frequency: z.enum(["DAILY", "WEEKLY", "CUSTOM"]),
-  activeDays: z.string().optional(), // JSON array string
+  activeDays: z.string().optional(),
   categoryName: z.string().optional(),
-  time: z.string().optional(), // HH:mm format
-  duration: z.string().optional(), // Durée de l'habitude
-  notificationsEnabled: z.string().optional(), // "true" | "false"
-  startDate: z.string().optional(), // Date de début (YYYY-MM-DD)
-  endDate: z.string().optional(), // Date de fin (YYYY-MM-DD)
+  time: z.string().optional(),
+  duration: z.string().optional(),
+  notificationsEnabled: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
 });
 
 export async function createHabit(_: unknown, formData: FormData) {
@@ -58,17 +58,12 @@ export async function createHabit(_: unknown, formData: FormData) {
     endDate,
   } = parsed.data;
 
-  // Gérer les jours actifs :
-  // - DAILY : tous les jours (0-6)
-  // - WEEKLY : une fois par semaine, pas de jours spécifiques
-  // - CUSTOM : jours personnalisés obligatoires
   let finalActiveDays: string | null = null;
   if (frequency === "DAILY") {
     finalActiveDays = JSON.stringify([0, 1, 2, 3, 4, 5, 6]);
   } else if (frequency === "WEEKLY") {
     finalActiveDays = null;
   } else if (activeDays && activeDays.trim() !== "") {
-    // Valider que activeDays est un JSON valide
     try {
       const parsedDays = JSON.parse(activeDays);
       if (Array.isArray(parsedDays) && parsedDays.length > 0) {
@@ -80,12 +75,9 @@ export async function createHabit(_: unknown, formData: FormData) {
       return { error: "Format des jours actifs invalide" };
     }
   } else {
-    // Si c'est CUSTOM et qu'aucun activeDays n'est fourni
     return { error: "Au moins un jour doit être sélectionné pour une fréquence personnalisée" };
   }
 
-  // Calculer les dates de début et de fin
-  // Le format reçu est YYYY-MM-DD, on doit créer une Date à minuit UTC
   const startDateValue =
     startDate && startDate.trim() !== ""
       ? new Date(startDate + "T00:00:00.000Z")
@@ -95,7 +87,6 @@ export async function createHabit(_: unknown, formData: FormData) {
       ? new Date(endDate + "T00:00:00.000Z")
       : null;
 
-  // Créer ou récupérer la catégorie si fournie et en déduire la couleur
   let categoryId: string | null = null;
   let color = "purple";
   if (categoryName && categoryName.trim() !== "") {
@@ -116,7 +107,7 @@ export async function createHabit(_: unknown, formData: FormData) {
         data: {
           name: categoryName,
           userId: user.id,
-          color, // couleur par défaut, modifiable dans la page de gestion des catégories
+          color,
         },
       });
       categoryId = newCategory.id;
@@ -140,9 +131,7 @@ export async function createHabit(_: unknown, formData: FormData) {
     },
   });
 
-  // Créer un Reminder si une heure est fournie
   if (time && time.trim() !== "") {
-    // Récupérer le timezone de l'utilisateur (par défaut, on utilise le timezone du système)
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     await prisma.reminder.create({
       data: {
@@ -207,17 +196,12 @@ export async function updateHabit(
     endDate,
   } = parsed.data;
 
-  // Gérer les jours actifs :
-  // - DAILY : tous les jours (0-6)
-  // - WEEKLY : une fois par semaine, pas de jours spécifiques
-  // - CUSTOM : jours personnalisés obligatoires
   let finalActiveDays: string | null = null;
   if (frequency === "DAILY") {
     finalActiveDays = JSON.stringify([0, 1, 2, 3, 4, 5, 6]);
   } else if (frequency === "WEEKLY") {
     finalActiveDays = null;
   } else if (activeDays && activeDays.trim() !== "") {
-    // Valider que activeDays est un JSON valide
     try {
       const parsedDays = JSON.parse(activeDays);
       if (Array.isArray(parsedDays) && parsedDays.length > 0) {
@@ -229,12 +213,9 @@ export async function updateHabit(
       return { error: "Format des jours actifs invalide" };
     }
   } else {
-    // Si c'est CUSTOM et qu'aucun activeDays n'est fourni
     return { error: "Au moins un jour doit être sélectionné pour une fréquence personnalisée" };
   }
 
-  // Calculer les dates de début et de fin
-  // Le format reçu est YYYY-MM-DD, on doit créer une Date à minuit UTC
   const startDateValue =
     startDate && startDate.trim() !== ""
       ? new Date(startDate + "T00:00:00.000Z")
@@ -244,7 +225,6 @@ export async function updateHabit(
       ? new Date(endDate + "T00:00:00.000Z")
       : null;
 
-  // Créer ou récupérer la catégorie si fournie et en déduire la couleur
   let categoryId: string | null = habit.categoryId;
   let color = habit.color;
   if (categoryName && categoryName.trim() !== "") {
@@ -289,7 +269,6 @@ export async function updateHabit(
     },
   });
 
-  // Gérer les reminders : supprimer les anciens et créer un nouveau si une heure est fournie
   await prisma.reminder.deleteMany({
     where: { habitId: id },
   });
@@ -346,7 +325,6 @@ export async function toggleHabitLog(habitId: string, date: Date) {
     return { error: "Habitude introuvable" };
   }
 
-  // Normaliser la date à minuit UTC
   const dateAtMidnight = new Date(date);
   dateAtMidnight.setUTCHours(0, 0, 0, 0);
 
