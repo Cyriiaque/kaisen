@@ -48,18 +48,18 @@ export function BottomNav() {
                 {isActive && (
                   <motion.div
                     layoutId="activeTab"
-                    className="absolute inset-0 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl"
+                    className="absolute inset-0 bg-kaisen-gradient-primary-br rounded-xl"
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   />
                 )}
                 <Icon
                   className={`w-6 h-6 relative z-10 ${
-                    isActive ? "text-white" : "text-muted-foreground"
+                    isActive ? "text-kaisen-on-primary" : "text-muted-foreground"
                   }`}
                 />
                 <span
                   className={`text-xs relative z-10 ${
-                    isActive ? "text-white" : "text-muted-foreground"
+                    isActive ? "text-kaisen-on-primary" : "text-muted-foreground"
                   }`}
                 >
                   {tab.label}

@@ -16,26 +16,15 @@ import {
 } from "@/app/(app)/category-actions";
 
 const CATEGORY_COLORS = [
-  { name: "purple", label: "Violet" },
-  { name: "pink", label: "Rose" },
-  { name: "blue", label: "Bleu" },
-  { name: "green", label: "Vert" },
-  { name: "orange", label: "Orange" },
-  { name: "teal", label: "Turquoise" },
-  { name: "red", label: "Rouge" },
-  { name: "yellow", label: "Jaune" },
+  { name: "purple", label: "Violet", gradientClass: "bg-kaisen-gradient-purple" },
+  { name: "pink", label: "Rose", gradientClass: "bg-kaisen-gradient-pink" },
+  { name: "blue", label: "Bleu", gradientClass: "bg-kaisen-gradient-blue" },
+  { name: "green", label: "Vert", gradientClass: "bg-kaisen-gradient-green" },
+  { name: "orange", label: "Orange", gradientClass: "bg-kaisen-gradient-orange" },
+  { name: "teal", label: "Turquoise", gradientClass: "bg-kaisen-gradient-teal" },
+  { name: "red", label: "Rouge", gradientClass: "bg-kaisen-gradient-red" },
+  { name: "yellow", label: "Jaune", gradientClass: "bg-kaisen-gradient-yellow" },
 ];
-
-const colorClasses: Record<string, string> = {
-  purple: "from-purple-400 to-purple-600",
-  pink: "from-pink-400 to-pink-600",
-  blue: "from-blue-400 to-blue-600",
-  green: "from-green-400 to-green-600",
-  orange: "from-orange-400 to-orange-600",
-  teal: "from-teal-400 to-teal-600",
-  red: "from-red-400 to-red-600",
-  yellow: "from-yellow-400 to-yellow-600",
-};
 
 interface CategoryFormProps {
   category?: { id: string; name: string; color: string };
@@ -118,7 +107,7 @@ export function CategoryForm({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6"
+        className="fixed inset-0 bg-kaisen-overlay z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6"
         onClick={onClose}
       >
         <motion.div
@@ -166,8 +155,9 @@ export function CategoryForm({
                     className="relative"
                   >
                     <div
-                      className={`w-full aspect-square rounded-xl bg-gradient-to-br ${
-                        colorClasses[c.name]
+                      className={`w-full aspect-square rounded-xl ${
+                        CATEGORY_COLORS.find((cc) => cc.name === c.name)
+                          ?.gradientClass ?? "bg-kaisen-gradient-purple"
                       } ${
                         color === c.name
                           ? "ring-2 ring-offset-2 ring-foreground"
@@ -205,7 +195,7 @@ export function CategoryForm({
               )}
               <Button
                 type="submit"
-                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                className="bg-kaisen-gradient-primary text-kaisen-on-primary hover:brightness-110"
                 disabled={isPending}
               >
                 {isPending

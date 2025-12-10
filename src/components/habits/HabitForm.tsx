@@ -55,14 +55,14 @@ const DAYS = [
 ];
 
 const colorClasses: Record<string, string> = {
-  purple: "from-purple-400 to-purple-600",
-  pink: "from-pink-400 to-pink-600",
-  blue: "from-blue-400 to-blue-600",
-  green: "from-green-400 to-green-600",
-  orange: "from-orange-400 to-orange-600",
-  teal: "from-teal-400 to-teal-600",
-  red: "from-red-400 to-red-600",
-  yellow: "from-yellow-400 to-yellow-600",
+  purple: "bg-kaisen-gradient-purple",
+  pink: "bg-kaisen-gradient-pink",
+  blue: "bg-kaisen-gradient-blue",
+  green: "bg-kaisen-gradient-green",
+  orange: "bg-kaisen-gradient-orange",
+  teal: "bg-kaisen-gradient-teal",
+  red: "bg-kaisen-gradient-red",
+  yellow: "bg-kaisen-gradient-yellow",
 };
 
 export function HabitForm({
@@ -232,7 +232,7 @@ export function HabitForm({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6"
+        className="fixed inset-0 bg-kaisen-overlay z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6"
         onClick={onClose}
       >
       <motion.div
@@ -410,7 +410,7 @@ export function HabitForm({
                 onClick={() => setFrequency("daily")}
                 className={`py-3 rounded-xl transition-all ${
                   frequency === "daily"
-                    ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                    ? "bg-kaisen-gradient-primary text-kaisen-on-primary"
                     : "bg-muted text-muted-foreground"
                 }`}
               >
@@ -421,7 +421,7 @@ export function HabitForm({
                 onClick={() => setFrequency("weekly")}
                 className={`py-3 rounded-xl transition-all ${
                   frequency === "weekly"
-                    ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                    ? "bg-kaisen-gradient-primary text-kaisen-on-primary"
                     : "bg-muted text-muted-foreground"
                 }`}
               >
@@ -432,7 +432,7 @@ export function HabitForm({
                 onClick={() => setFrequency("custom")}
                 className={`py-3 rounded-xl transition-all ${
                   frequency === "custom"
-                    ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                    ? "bg-kaisen-gradient-primary text-kaisen-on-primary"
                     : "bg-muted text-muted-foreground"
                 }`}
               >
@@ -457,7 +457,7 @@ export function HabitForm({
                       onClick={() => toggleDay(index)}
                       className={`flex flex-col items-center justify-center py-2 rounded-xl text-xs ${
                         isActive
-                          ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                          ? "bg-kaisen-gradient-primary text-kaisen-on-primary"
                           : "bg-muted text-muted-foreground"
                       }`}
                       title={day.full}
@@ -488,7 +488,7 @@ export function HabitForm({
             )}
             <Button
               type="submit"
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+              className="bg-kaisen-gradient-primary text-kaisen-on-primary hover:brightness-110"
               disabled={isPending}
             >
               {isPending

@@ -76,6 +76,49 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Couleurs de marque (reprennent la palette Tailwind par défaut) */
+  --kaisen-purple-400: #c4b5fd;
+  --kaisen-purple-500: #a855f7;
+  --kaisen-purple-600: #9333ea;
+
+  --kaisen-pink-400: #f9a8d4;
+  --kaisen-pink-500: #ec4899;
+  --kaisen-pink-600: #db2777;
+
+  --kaisen-blue-400: #60a5fa;
+  --kaisen-blue-500: #3b82f6;
+  --kaisen-blue-600: #2563eb;
+
+  --kaisen-green-400: #4ade80;
+  --kaisen-green-500: #22c55e;
+  --kaisen-green-600: #16a34a;
+
+  --kaisen-orange-400: #fb923c;
+  --kaisen-orange-500: #f97316;
+  --kaisen-orange-600: #ea580c;
+
+  --kaisen-teal-400: #2dd4bf;
+  --kaisen-teal-500: #14b8a6;
+  --kaisen-teal-600: #0d9488;
+
+  --kaisen-red-400: #f87171;
+  --kaisen-red-500: #ef4444;
+  --kaisen-red-600: #dc2626;
+
+  --kaisen-yellow-400: #facc15;
+  --kaisen-yellow-500: #eab308;
+  --kaisen-yellow-600: #ca8a04;
+
+  /* Surfaces translucides / overlays */
+  --kaisen-overlay: rgb(0 0 0 / 0.5);
+  --kaisen-glass-10: rgb(255 255 255 / 0.1);
+  --kaisen-glass-20: rgb(255 255 255 / 0.2);
+  --kaisen-glass-30: rgb(255 255 255 / 0.3);
+
+  /* Texte sur fonds de marque */
+  --kaisen-on-primary: #ffffff;
+  --kaisen-on-danger: #ffffff;
 }
 
 .dark {
@@ -110,6 +153,47 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Conserver les mêmes couleurs de marque pour le mode sombre afin de ne pas changer le style */
+  --kaisen-purple-400: #c4b5fd;
+  --kaisen-purple-500: #a855f7;
+  --kaisen-purple-600: #9333ea;
+
+  --kaisen-pink-400: #f9a8d4;
+  --kaisen-pink-500: #ec4899;
+  --kaisen-pink-600: #db2777;
+
+  --kaisen-blue-400: #60a5fa;
+  --kaisen-blue-500: #3b82f6;
+  --kaisen-blue-600: #2563eb;
+
+  --kaisen-green-400: #4ade80;
+  --kaisen-green-500: #22c55e;
+  --kaisen-green-600: #16a34a;
+
+  --kaisen-orange-400: #fb923c;
+  --kaisen-orange-500: #f97316;
+  --kaisen-orange-600: #ea580c;
+
+  --kaisen-teal-400: #2dd4bf;
+  --kaisen-teal-500: #14b8a6;
+  --kaisen-teal-600: #0d9488;
+
+  --kaisen-red-400: #f87171;
+  --kaisen-red-500: #ef4444;
+  --kaisen-red-600: #dc2626;
+
+  --kaisen-yellow-400: #facc15;
+  --kaisen-yellow-500: #eab308;
+  --kaisen-yellow-600: #ca8a04;
+
+  --kaisen-overlay: rgb(0 0 0 / 0.6);
+  --kaisen-glass-10: rgb(15 23 42 / 0.6);
+  --kaisen-glass-20: rgb(15 23 42 / 0.7);
+  --kaisen-glass-30: rgb(15 23 42 / 0.8);
+
+  --kaisen-on-primary: #ffffff;
+  --kaisen-on-danger: #ffffff;
 }
 
 @layer base {
@@ -118,5 +202,139 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Overlays / surfaces verre */
+  .bg-kaisen-overlay {
+    background-color: var(--kaisen-overlay);
+  }
+
+  .bg-kaisen-glass-10 {
+    background-color: var(--kaisen-glass-10);
+  }
+
+  .bg-kaisen-glass-20 {
+    background-color: var(--kaisen-glass-20);
+  }
+
+  .bg-kaisen-glass-30 {
+    background-color: var(--kaisen-glass-30);
+  }
+
+  .text-kaisen-on-primary {
+    color: var(--kaisen-on-primary);
+  }
+
+  .text-kaisen-on-danger {
+    color: var(--kaisen-on-danger);
+  }
+
+  /* Gradients de marque */
+  .bg-kaisen-gradient-primary {
+    background-image: linear-gradient(
+      to right,
+      var(--kaisen-purple-500),
+      var(--kaisen-pink-500)
+    );
+  }
+
+  .bg-kaisen-gradient-primary-br {
+    background-image: linear-gradient(
+      to bottom right,
+      var(--kaisen-purple-500),
+      var(--kaisen-pink-500)
+    );
+  }
+
+  .bg-kaisen-gradient-purple {
+    background-image: linear-gradient(
+      to bottom right,
+      var(--kaisen-purple-400),
+      var(--kaisen-purple-600)
+    );
+  }
+
+  .bg-kaisen-gradient-pink {
+    background-image: linear-gradient(
+      to bottom right,
+      var(--kaisen-pink-400),
+      var(--kaisen-pink-600)
+    );
+  }
+
+  .bg-kaisen-gradient-blue {
+    background-image: linear-gradient(
+      to bottom right,
+      var(--kaisen-blue-400),
+      var(--kaisen-blue-600)
+    );
+  }
+
+  .bg-kaisen-gradient-green {
+    background-image: linear-gradient(
+      to bottom right,
+      var(--kaisen-green-400),
+      var(--kaisen-green-600)
+    );
+  }
+
+  .bg-kaisen-gradient-orange {
+    background-image: linear-gradient(
+      to bottom right,
+      var(--kaisen-orange-400),
+      var(--kaisen-orange-600)
+    );
+  }
+
+  .bg-kaisen-gradient-teal {
+    background-image: linear-gradient(
+      to bottom right,
+      var(--kaisen-teal-400),
+      var(--kaisen-teal-600)
+    );
+  }
+
+  .bg-kaisen-gradient-red {
+    background-image: linear-gradient(
+      to bottom right,
+      var(--kaisen-red-400),
+      var(--kaisen-red-600)
+    );
+  }
+
+  .bg-kaisen-gradient-yellow {
+    background-image: linear-gradient(
+      to bottom right,
+      var(--kaisen-yellow-400),
+      var(--kaisen-yellow-600)
+    );
+  }
+
+  /* Couleurs de bordure de marque */
+  .border-kaisen-purple-400 {
+    border-color: var(--kaisen-purple-400);
+  }
+  .border-kaisen-pink-400 {
+    border-color: var(--kaisen-pink-400);
+  }
+  .border-kaisen-blue-400 {
+    border-color: var(--kaisen-blue-400);
+  }
+  .border-kaisen-green-400 {
+    border-color: var(--kaisen-green-400);
+  }
+  .border-kaisen-orange-400 {
+    border-color: var(--kaisen-orange-400);
+  }
+  .border-kaisen-teal-400 {
+    border-color: var(--kaisen-teal-400);
+  }
+  .border-kaisen-red-400 {
+    border-color: var(--kaisen-red-400);
+  }
+  .border-kaisen-yellow-400 {
+    border-color: var(--kaisen-yellow-400);
   }
 }

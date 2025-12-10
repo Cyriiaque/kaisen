@@ -117,7 +117,7 @@ export function NotificationsOverlay({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 z-[100]"
+            className="fixed inset-0 bg-kaisen-overlay z-[100]"
           />
           
           <motion.div
@@ -132,7 +132,7 @@ export function NotificationsOverlay({
                 <Bell className="w-5 h-5 text-foreground" />
                 <h2 className="text-foreground font-semibold">Notifications</h2>
                 {unreadCount > 0 && (
-                  <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-2 py-0.5 rounded-full">
+                  <span className="bg-kaisen-gradient-primary text-kaisen-on-primary text-xs px-2 py-0.5 rounded-full">
                     {unreadCount}
                   </span>
                 )}

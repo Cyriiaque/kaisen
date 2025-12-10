@@ -194,25 +194,25 @@ export function CalendarView({ habits }: CalendarViewProps) {
   };
 
   const colorClasses: Record<string, string> = {
-    purple: "from-purple-400 to-purple-600",
-    pink: "from-pink-400 to-pink-600",
-    blue: "from-blue-400 to-blue-600",
-    green: "from-green-400 to-green-600",
-    orange: "from-orange-400 to-orange-600",
-    teal: "from-teal-400 to-teal-600",
-    red: "from-red-400 to-red-600",
-    yellow: "from-yellow-400 to-yellow-600",
+    purple: "bg-kaisen-gradient-purple",
+    pink: "bg-kaisen-gradient-pink",
+    blue: "bg-kaisen-gradient-blue",
+    green: "bg-kaisen-gradient-green",
+    orange: "bg-kaisen-gradient-orange",
+    teal: "bg-kaisen-gradient-teal",
+    red: "bg-kaisen-gradient-red",
+    yellow: "bg-kaisen-gradient-yellow",
   };
 
   const borderColorClasses: Record<string, string> = {
-    purple: "border-purple-400",
-    pink: "border-pink-400",
-    blue: "border-blue-400",
-    green: "border-green-400",
-    orange: "border-orange-400",
-    teal: "border-teal-400",
-    red: "border-red-400",
-    yellow: "border-yellow-400",
+    purple: "border-kaisen-purple-400",
+    pink: "border-kaisen-pink-400",
+    blue: "border-kaisen-blue-400",
+    green: "border-kaisen-green-400",
+    orange: "border-kaisen-orange-400",
+    teal: "border-kaisen-teal-400",
+    red: "border-kaisen-red-400",
+    yellow: "border-kaisen-yellow-400",
   };
 
   return (
@@ -261,7 +261,7 @@ export function CalendarView({ habits }: CalendarViewProps) {
               onClick={() => setSelectedCategory(null)}
               className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-all text-sm ${
                 !selectedCategory
-                  ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md"
+                  ? "bg-kaisen-gradient-primary text-kaisen-on-primary shadow-md"
                   : "bg-muted text-muted-foreground"
               }`}
             >
@@ -274,7 +274,7 @@ export function CalendarView({ habits }: CalendarViewProps) {
                 onClick={() => setSelectedCategory(category)}
                 className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-all text-sm ${
                   selectedCategory === category
-                    ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md"
+                    ? "bg-kaisen-gradient-primary text-kaisen-on-primary shadow-md"
                     : "bg-muted text-muted-foreground"
                 }`}
               >
@@ -358,11 +358,13 @@ export function CalendarView({ habits }: CalendarViewProps) {
                           key={habit.id}
                           className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0 ${
                             habit.isCompleted
-                              ? `bg-gradient-to-br ${
-                                  colorClasses[habit.color] || colorClasses.purple
+                              ? `${
+                                  colorClasses[habit.color] ||
+                                  colorClasses.purple
                                 }`
                               : `border border-[1.5px] sm:border-2 ${
-                                  borderColorClasses[habit.color] || borderColorClasses.purple
+                                  borderColorClasses[habit.color] ||
+                                  borderColorClasses.purple
                                 } bg-transparent opacity-60`
                           }`}
                           title={habit.name}
@@ -423,11 +425,13 @@ export function CalendarView({ habits }: CalendarViewProps) {
                       <span
                         className={`w-2.5 h-2.5 rounded-full ${
                           habit.isCompleted
-                            ? `bg-gradient-to-br ${
-                                colorClasses[habit.color] || colorClasses.purple
+                            ? `${
+                                colorClasses[habit.color] ||
+                                colorClasses.purple
                               }`
                             : `border-2 ${
-                                borderColorClasses[habit.color] || borderColorClasses.purple
+                                borderColorClasses[habit.color] ||
+                                borderColorClasses.purple
                               } bg-transparent opacity-70`
                         }`}
                       />

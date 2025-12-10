@@ -17,25 +17,25 @@ export function HabitCard({ habit, onToggle }: HabitCardProps) {
   );
 
   const colorClasses: Record<string, string> = {
-    purple: "from-purple-400 to-purple-600",
-    pink: "from-pink-400 to-pink-600",
-    blue: "from-blue-400 to-blue-600",
-    green: "from-green-400 to-green-600",
-    orange: "from-orange-400 to-orange-600",
-    teal: "from-teal-400 to-teal-600",
-    red: "from-red-400 to-red-600",
-    yellow: "from-yellow-400 to-yellow-600",
+    purple: "bg-kaisen-gradient-purple",
+    pink: "bg-kaisen-gradient-pink",
+    blue: "bg-kaisen-gradient-blue",
+    green: "bg-kaisen-gradient-green",
+    orange: "bg-kaisen-gradient-orange",
+    teal: "bg-kaisen-gradient-teal",
+    red: "bg-kaisen-gradient-red",
+    yellow: "bg-kaisen-gradient-yellow",
   };
 
   const borderColorClasses: Record<string, string> = {
-    purple: "border-purple-500",
-    pink: "border-pink-500",
-    blue: "border-blue-500",
-    green: "border-green-500",
-    orange: "border-orange-500",
-    teal: "border-teal-500",
-    red: "border-red-500",
-    yellow: "border-yellow-500",
+    purple: "border-kaisen-purple-400",
+    pink: "border-kaisen-pink-400",
+    blue: "border-kaisen-blue-400",
+    green: "border-kaisen-green-400",
+    orange: "border-kaisen-orange-400",
+    teal: "border-kaisen-teal-400",
+    red: "border-kaisen-red-400",
+    yellow: "border-kaisen-yellow-400",
   };
 
   const bgGradient = colorClasses[habit.color] || colorClasses.purple;
@@ -50,12 +50,12 @@ export function HabitCard({ habit, onToggle }: HabitCardProps) {
       className="relative"
     >
       <div className={`bg-card/50 backdrop-blur-sm rounded-2xl p-4 shadow-sm border-2 ${borderColor} overflow-hidden relative`}>
-        <div className={`absolute inset-0 bg-gradient-to-br ${bgGradient} opacity-10 rounded-2xl pointer-events-none`} />
+        <div className={`absolute inset-0 ${bgGradient} opacity-10 rounded-2xl pointer-events-none`} />
 
         <div className="relative z-10 flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <div className={`w-3 h-3 rounded-full bg-gradient-to-br ${bgGradient}`} />
+              <div className={`w-3 h-3 rounded-full ${bgGradient}`} />
               <h3 className="text-foreground truncate">{habit.name}</h3>
             </div>
             {habit.description && (
@@ -101,9 +101,7 @@ export function HabitCard({ habit, onToggle }: HabitCardProps) {
               whileTap={{ scale: 0.9 }}
               onClick={() => onToggle(habit.id)}
               className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
-                isCompleted
-                  ? `bg-gradient-to-br ${bgGradient} shadow-lg`
-                  : "bg-muted"
+                isCompleted ? `${bgGradient} shadow-lg` : "bg-muted"
               }`}
             >
               {isCompleted && (

@@ -143,7 +143,7 @@ export function Dashboard({ habits }: DashboardProps) {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl p-6 mb-6 text-white shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
+          className="bg-kaisen-gradient-primary-br rounded-3xl p-6 mb-6 text-kaisen-on-primary shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
         >
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -156,7 +156,7 @@ export function Dashboard({ habits }: DashboardProps) {
                 })}
               </h2>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-4 py-2">
+            <div className="bg-kaisen-glass-20 backdrop-blur-sm rounded-2xl px-4 py-2">
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
                 <span>{todayStats.percentage}%</span>
@@ -164,19 +164,19 @@ export function Dashboard({ habits }: DashboardProps) {
             </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+          <div className="bg-kaisen-glass-10 backdrop-blur-sm rounded-2xl p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-white/80 text-sm">Progression du jour</span>
               <span className="text-white">
                 {todayStats.completed}/{todayStats.total}
               </span>
             </div>
-            <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
+            <div className="w-full bg-kaisen-glass-20 rounded-full h-2 overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${todayStats.percentage}%` }}
                 transition={{ duration: 1, delay: 0.5 }}
-                className="h-full bg-white rounded-full"
+                className="h-full bg-kaisen-glass-30 rounded-full"
               />
             </div>
           </div>

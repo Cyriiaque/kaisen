@@ -11,14 +11,14 @@ import { HabitForm } from "@/components/habits/HabitForm";
 import type { Habit } from "@/components/habits/types";
 
 const colorClasses: Record<string, string> = {
-  purple: "from-purple-400 to-purple-600",
-  pink: "from-pink-400 to-pink-600",
-  blue: "from-blue-400 to-blue-600",
-  green: "from-green-400 to-green-600",
-  orange: "from-orange-400 to-orange-600",
-  teal: "from-teal-400 to-teal-600",
-  red: "from-red-400 to-red-600",
-  yellow: "from-yellow-400 to-yellow-600",
+  purple: "bg-kaisen-gradient-purple",
+  pink: "bg-kaisen-gradient-pink",
+  blue: "bg-kaisen-gradient-blue",
+  green: "bg-kaisen-gradient-green",
+  orange: "bg-kaisen-gradient-orange",
+  teal: "bg-kaisen-gradient-teal",
+  red: "bg-kaisen-gradient-red",
+  yellow: "bg-kaisen-gradient-yellow",
 };
 
 interface HabitsManagementProps {
@@ -127,7 +127,7 @@ export function HabitsManagement({
 
         <Button
           type="button"
-          className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+          className="w-full bg-kaisen-gradient-primary text-kaisen-on-primary"
           onClick={() => handleOpenCategoryForm()}
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -144,7 +144,7 @@ export function HabitsManagement({
             >
               <div className="flex items-center gap-3 flex-1">
                 <div
-                  className={`w-5 h-5 rounded-full bg-gradient-to-br ${
+                  className={`w-5 h-5 rounded-full ${
                     colorClasses[category.color] || colorClasses.purple
                   }`}
                 />
@@ -179,7 +179,7 @@ export function HabitsManagement({
 
         <Button
           type="button"
-          className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white mb-3"
+          className="w-full bg-kaisen-gradient-primary text-kaisen-on-primary mb-3"
           onClick={() => handleOpenHabitForm()}
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -214,7 +214,7 @@ export function HabitsManagement({
             >
               <div className="flex items-center gap-3 flex-1">
                 <div
-                  className={`w-3 h-3 rounded-full bg-gradient-to-br ${
+                  className={`w-3 h-3 rounded-full ${
                     colorClasses[habit.color] || colorClasses.purple
                   }`}
                 />

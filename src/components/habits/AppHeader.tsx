@@ -41,11 +41,6 @@ export function AppHeader() {
   }, []);
 
   const tickNotifications = async () => {
-    if (process.env.NODE_ENV !== "development") {
-      loadUnreadCount();
-      return;
-    }
-
     try {
       const response = await fetch("/api/notifications", {
         method: "GET",
@@ -62,6 +57,8 @@ export function AppHeader() {
         if (data.notificationsCreated > 0) {
           console.log("[AppHeader] Notifications créées:", data.notificationsCreated);
         }
+      } else {
+        loadUnreadCount();
       }
     } catch (error) {
       console.error("[AppHeader] Erreur lors du tick:", error);
@@ -103,7 +100,7 @@ export function AppHeader() {
           >
             <Bell className="w-5 h-5 text-foreground" />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs rounded-full flex items-center justify-center font-semibold">
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-kaisen-gradient-primary text-kaisen-on-primary text-xs rounded-full flex items-center justify-center font-semibold">
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
