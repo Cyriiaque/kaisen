@@ -36,6 +36,7 @@ interface HabitsManagementProps {
     activeDays?: number[];
     duration?: string;
     reminderTime?: string;
+    notificationsEnabled?: boolean;
   }[];
 }
 
@@ -206,6 +207,7 @@ export function HabitsManagement({
                   endDate: habit.endDate,
                   reminderTime: habit.reminderTime,
                   duration: habit.duration,
+                  notificationsEnabled: habit.notificationsEnabled,
                 })
               }
               className="w-full flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2 hover:bg-muted/50 transition-colors text-left"

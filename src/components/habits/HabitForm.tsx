@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
+import { useState, useTransition, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X } from "lucide-react";
 import { toast } from "sonner";
@@ -115,6 +115,38 @@ export function HabitForm({
   const [endDate, setEndDate] = useState(() => {
     return habit?.endDate ? habit.endDate.split("T")[0] : "";
   });
+
+  useEffect(() => {
+    if (habit) {
+      setName(habit.name || "");
+      setDescription(habit.description || "");
+      setCategory(habit.category || normalizedCategories[0]?.name || "Autre");
+      setFrequency(habit.frequency || "daily");
+      setActiveDays(habit.activeDays || [0, 1, 2, 3, 4, 5, 6]);
+      setTime(habit.reminderTime || "");
+      setDuration(habit.duration ? parseInt(habit.duration, 10) || "" : "");
+      setNotificationsEnabled(habit.notificationsEnabled ?? false);
+      if (habit.startDate) {
+        setStartDate(habit.startDate.split("T")[0]);
+      } else if (habit.createdAt) {
+        setStartDate(habit.createdAt.split("T")[0]);
+      } else {
+        setStartDate(new Date().toISOString().split("T")[0]);
+      }
+      setEndDate(habit.endDate ? habit.endDate.split("T")[0] : "");
+    } else {
+      setName("");
+      setDescription("");
+      setCategory(normalizedCategories[0]?.name || "Autre");
+      setFrequency("daily");
+      setActiveDays([0, 1, 2, 3, 4, 5, 6]);
+      setTime("");
+      setDuration("");
+      setNotificationsEnabled(false);
+      setStartDate(new Date().toISOString().split("T")[0]);
+      setEndDate("");
+    }
+  }, [habit, normalizedCategories]);
 
   const toggleDay = (dayIndex: number) => {
     setActiveDays((prev) =>
