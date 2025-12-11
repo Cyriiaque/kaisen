@@ -30,6 +30,40 @@ export async function getNotifications() {
   };
 }
 
+export async function getNotificationsAndMarkAsRead() {
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/login");
+  }
+
+  const notifications = await prisma.notification.findMany({
+    where: {
+      userId: user.id,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    take: 50,
+  });
+
+  await prisma.notification.updateMany({
+    where: {
+      userId: user.id,
+      read: false,
+    },
+    data: { read: true },
+  });
+
+  revalidatePath("/");
+  
+  return {
+    notifications: notifications.map((notification) => ({
+      ...notification,
+      createdAt: notification.createdAt.toISOString(),
+    })),
+  };
+}
+
 export async function markNotificationAsRead(notificationId: string) {
   const user = await getCurrentUser();
   if (!user) {
@@ -47,6 +81,28 @@ export async function markNotificationAsRead(notificationId: string) {
   await prisma.notification.update({
     where: { id: notificationId },
     data: { read: true },
+  });
+
+  revalidatePath("/");
+  return { success: true };
+}
+
+export async function deleteNotification(notificationId: string) {
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/login");
+  }
+
+  const notification = await prisma.notification.findUnique({
+    where: { id: notificationId },
+  });
+
+  if (!notification || notification.userId !== user.id) {
+    return { error: "Notification introuvable" };
+  }
+
+  await prisma.notification.delete({
+    where: { id: notificationId },
   });
 
   revalidatePath("/");

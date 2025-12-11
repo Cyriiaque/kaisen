@@ -2,16 +2,14 @@
 
 import { useState, useEffect, useTransition } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, Bell, Check, CheckCheck } from "lucide-react";
+import { X, Bell } from "lucide-react";
 import { toast } from "sonner";
 
 import {
-  getNotifications,
-  markNotificationAsRead,
-  markAllNotificationsAsRead,
+  getNotificationsAndMarkAsRead,
+  deleteNotification,
   getUnreadNotificationsCount,
 } from "@/app/(app)/notification-actions";
-import { Button } from "@/components/ui/button";
 
 interface Notification {
   id: string;
@@ -36,14 +34,14 @@ export function NotificationsOverlay({
 
   useEffect(() => {
     if (isOpen) {
-      loadNotifications();
+      loadNotificationsAndMarkAsRead();
     }
   }, [isOpen]);
 
-  const loadNotifications = async () => {
+  const loadNotificationsAndMarkAsRead = async () => {
     setIsLoading(true);
     try {
-      const result = await getNotifications();
+      const result = await getNotificationsAndMarkAsRead();
       if (result.notifications) {
         setNotifications(result.notifications);
       }
@@ -55,29 +53,15 @@ export function NotificationsOverlay({
     }
   };
 
-  const handleMarkAsRead = async (notificationId: string) => {
+  const handleDeleteNotification = async (notificationId: string) => {
     startTransition(async () => {
-      const result = await markNotificationAsRead(notificationId);
+      const result = await deleteNotification(notificationId);
       if (result?.error) {
         toast.error(result.error);
       } else {
         setNotifications((prev) =>
-          prev.map((n) =>
-            n.id === notificationId ? { ...n, read: true } : n
-          )
+          prev.filter((notification) => notification.id !== notificationId)
         );
-      }
-    });
-  };
-
-  const handleMarkAllAsRead = async () => {
-    startTransition(async () => {
-      const result = await markAllNotificationsAsRead();
-      if (result?.error) {
-        toast.error(result.error);
-      } else {
-        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-        toast.success("Toutes les notifications ont été marquées comme lues");
       }
     });
   };
@@ -98,12 +82,44 @@ export function NotificationsOverlay({
       const reminderTime = payload.reminderTime;
       
       if (reminderTime) {
-        return `Rappel : ${habitName} dans 20 minutes (${reminderTime})`;
+        const notificationDate = new Date(notification.createdAt);
+        const [hours, minutes] = reminderTime.split(":").map(Number);
+        
+        const habitDateTime = new Date(notificationDate);
+        habitDateTime.setHours(hours, minutes, 0, 0);
+        
+        if (habitDateTime < notificationDate) {
+          habitDateTime.setDate(habitDateTime.getDate() + 1);
+        }
+        
+        const diffMs = habitDateTime.getTime() - notificationDate.getTime();
+        const diffMinutes = Math.ceil(diffMs / (1000 * 60));
+        
+        let timeText = "";
+        if (diffMinutes < 1) {
+          timeText = "maintenant";
+        } else if (diffMinutes < 60) {
+          timeText = `dans ${diffMinutes} minute${diffMinutes > 1 ? "s" : ""}`;
+        } else {
+          const hours = Math.floor(diffMinutes / 60);
+          const mins = diffMinutes % 60;
+          if (mins === 0) {
+            timeText = `dans ${hours} heure${hours > 1 ? "s" : ""}`;
+          } else {
+            timeText = `dans ${hours}h${mins}`;
+          }
+        }
+        
+        return `Rappel : ${habitName} ${timeText} (${reminderTime})`;
       }
       return `Rappel : ${habitName}`;
     }
     
     return "Nouvelle notification";
+  };
+
+  const isRecentNotification = (notification: Notification) => {
+    return !notification.read;
   };
 
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -138,18 +154,6 @@ export function NotificationsOverlay({
                 )}
               </div>
               <div className="flex items-center gap-2">
-                {unreadCount > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleMarkAllAsRead}
-                    disabled={isPending}
-                    className="text-xs"
-                  >
-                    <CheckCheck className="w-4 h-4 mr-1" />
-                    Tout marquer lu
-                  </Button>
-                )}
                 <button
                   type="button"
                   onClick={onClose}
@@ -176,7 +180,7 @@ export function NotificationsOverlay({
                 <div className="space-y-3">
                   {notifications.map((notification) => {
                     const payload = parsePayload(notification.payload);
-                    const isRead = notification.read;
+                    const isRecent = isRecentNotification(notification);
                     
                     return (
                       <motion.div
@@ -184,18 +188,18 @@ export function NotificationsOverlay({
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         className={`rounded-xl p-4 border ${
-                          isRead
-                            ? "bg-muted/30 border-border"
-                            : "bg-background border-purple-500/30 shadow-sm"
+                          isRecent
+                            ? "bg-kaisen-gradient-primary/10 border-purple-500/60 shadow-sm"
+                            : "bg-muted/30 border-border"
                         }`}
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <p
                               className={`text-sm ${
-                                isRead
-                                  ? "text-muted-foreground"
-                                  : "text-foreground font-medium"
+                                isRecent
+                                  ? "text-foreground font-semibold"
+                                  : "text-muted-foreground"
                               }`}
                             >
                               {formatNotificationMessage(notification)}
@@ -212,16 +216,16 @@ export function NotificationsOverlay({
                               )}
                             </p>
                           </div>
-                          {!isRead && (
-                            <button
-                              onClick={() => handleMarkAsRead(notification.id)}
-                              disabled={isPending}
-                              className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors"
-                              title="Marquer comme lu"
-                            >
-                              <Check className="w-4 h-4 text-muted-foreground" />
-                            </button>
-                          )}
+                          <button
+                            onClick={() =>
+                              handleDeleteNotification(notification.id)
+                            }
+                            disabled={isPending}
+                            className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors"
+                            title="Supprimer la notification"
+                          >
+                            <X className="w-4 h-4 text-muted-foreground" />
+                          </button>
                         </div>
                       </motion.div>
                     );

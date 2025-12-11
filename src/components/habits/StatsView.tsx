@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/select";
 
 import type { Habit } from "@/components/habits/types";
+import { getTodayInFranceISO } from "@/lib/utils";
 
 interface StatsViewProps {
   habits: Habit[];
@@ -40,9 +41,9 @@ type Period = "week" | "month" | "year";
 
 export function StatsView({ habits }: StatsViewProps) {
   const [period, setPeriod] = useState<Period>("week");
+  const today = getTodayInFranceISO();
 
   const stats = useMemo(() => {
-    const today = new Date().toISOString().split("T")[0];
 
     const isHabitActiveOnDate = (habit: Habit, dateStr: string): boolean => {
       const habitStart = new Date(habit.startDate || habit.createdAt);
@@ -177,10 +178,10 @@ export function StatsView({ habits }: StatsViewProps) {
 
     if (period === "week") {
       const days = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (6 - i));
-      return date.toISOString().split("T")[0];
-    });
+        const date = new Date(todayDateObj);
+        date.setUTCDate(date.getUTCDate() - (6 - i));
+        return date.toISOString().split("T")[0];
+      });
 
       chartData = days.map((date) => {
       const activeHabitsOnDate = habits.filter((h) =>
@@ -198,7 +199,7 @@ export function StatsView({ habits }: StatsViewProps) {
         "Jeu",
         "Ven",
         "Sam",
-      ][new Date(date).getDay()];
+      ][new Date(date).getUTCDay()];
       return {
           label: dayName,
         completed,
@@ -209,11 +210,11 @@ export function StatsView({ habits }: StatsViewProps) {
     } else if (period === "month") {
       const weeks: string[][] = [];
       const currentWeek: string[] = [];
-      const today = new Date();
+      const todayForMonth = new Date(todayDateObj);
       
       for (let i = 29; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
+        const date = new Date(todayForMonth);
+        date.setUTCDate(date.getUTCDate() - i);
         const dateStr = date.toISOString().split("T")[0];
         currentWeek.push(dateStr);
         
@@ -246,18 +247,28 @@ export function StatsView({ habits }: StatsViewProps) {
       });
     } else if (period === "year") {
       const months: Array<{ start: Date; end: Date; label: string }> = [];
-      const today = new Date();
+      const today = new Date(todayDateObj);
       
       for (let i = 11; i >= 0; i--) {
-        const monthDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
-        const nextMonth = new Date(monthDate);
-        nextMonth.setMonth(nextMonth.getMonth() + 1);
+        const monthDate = new Date(
+          Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - i, 1),
+        );
+        const nextMonth = new Date(
+          Date.UTC(
+            monthDate.getUTCFullYear(),
+            monthDate.getUTCMonth() + 1,
+            1,
+          ),
+        );
         const endDate = new Date(nextMonth.getTime() - 1);
         
         months.push({
           start: monthDate,
           end: endDate,
-          label: monthDate.toLocaleDateString("fr-FR", { month: "short" }),
+          label: monthDate.toLocaleDateString("fr-FR", {
+            month: "short",
+            timeZone: "Europe/Paris",
+          }),
         });
       }
 
@@ -477,8 +488,7 @@ export function StatsView({ habits }: StatsViewProps) {
             <Bar dataKey="completed" radius={[8, 8, 0, 0]}>
                 {stats.chartData.map((entry) => {
                 const isToday =
-                    period === "week" &&
-                  entry.date === new Date().toISOString().split("T")[0];
+                    period === "week" && entry.date === today;
                 return (
                   <Cell
                     key={`cell-${entry.date}`}

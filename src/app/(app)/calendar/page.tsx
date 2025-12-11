@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/app/auth-actions";
 import { prisma } from "@/lib/prisma";
 import { CalendarView } from "@/components/habits/CalendarView";
+import { getTodayInFranceISO } from "@/lib/utils";
 
 function CalendarSkeleton() {
   return (
@@ -49,8 +50,7 @@ async function CalendarContent() {
     );
 
     let streak = 0;
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
+    const today = new Date(getTodayInFranceISO());
 
     for (let i = 0; i < 365; i++) {
       const checkDate = new Date(today);
