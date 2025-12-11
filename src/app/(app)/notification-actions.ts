@@ -6,6 +6,35 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/app/auth-actions";
 
+function getTimezoneOffsetInMinutes(date: Date, timeZone: string): number {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+
+  const parts = formatter.formatToParts(date);
+  const get = (type: string) =>
+    parseInt(parts.find((p) => p.type === type)?.value || "0", 10);
+
+  const year = get("year");
+  const month = get("month");
+  const day = get("day");
+  const hour = get("hour");
+  const minute = get("minute");
+  const second = get("second");
+
+  const localAsUtc = Date.UTC(year, month - 1, day, hour, minute, second);
+  const utcTs = date.getTime();
+
+  return (localAsUtc - utcTs) / (1000 * 60);
+}
+
 export async function getNotifications() {
   const user = await getCurrentUser();
   if (!user) {
@@ -225,13 +254,24 @@ export async function testScheduleNotifications() {
         const reminder = habit.reminders[0];
         reminderTime = reminder.atTime;
         const [hours, minutes] = reminder.atTime.split(":").map(Number);
-        
+
+        const timeZone = reminder.timezone || "Europe/Paris";
+        const offsetMinutes = getTimezoneOffsetInMinutes(today, timeZone);
+
         notificationTime = new Date(today);
-        notificationTime.setHours(hours, minutes, 0, 0);
-        notificationTime.setMinutes(notificationTime.getMinutes() - 20);
+        notificationTime.setUTCHours(hours, minutes, 0, 0);
+        notificationTime.setUTCMinutes(
+          notificationTime.getUTCMinutes() - offsetMinutes - 20
+        );
       } else {
+        const timeZone = "Europe/Paris";
+        const offsetMinutes = getTimezoneOffsetInMinutes(today, timeZone);
+
         notificationTime = new Date(today);
-        notificationTime.setHours(8, 0, 0, 0);
+        notificationTime.setUTCHours(8, 0, 0, 0);
+        notificationTime.setUTCMinutes(
+          notificationTime.getUTCMinutes() - offsetMinutes
+        );
       }
 
       const nowTime = new Date();
@@ -243,11 +283,22 @@ export async function testScheduleNotifications() {
       let timeWindowEnd: Date;
       if (habit.reminders.length > 0) {
         const [hours, minutes] = reminderTime!.split(":").map(Number);
+        const reminder = habit.reminders[0];
+        const timeZone = reminder.timezone || "Europe/Paris";
+        const offsetMinutes = getTimezoneOffsetInMinutes(today, timeZone);
+
         const habitTime = new Date(today);
-        habitTime.setHours(hours, minutes, 0, 0);
+        habitTime.setUTCHours(hours, minutes, 0, 0);
+        habitTime.setUTCMinutes(
+          habitTime.getUTCMinutes() - offsetMinutes
+        );
+
         const twoHoursAfterNotification = new Date(notificationTime);
-        twoHoursAfterNotification.setHours(twoHoursAfterNotification.getHours() + 2);
-        timeWindowEnd = habitTime < twoHoursAfterNotification ? habitTime : twoHoursAfterNotification;
+        twoHoursAfterNotification.setHours(
+          twoHoursAfterNotification.getHours() + 2
+        );
+        timeWindowEnd =
+          habitTime < twoHoursAfterNotification ? habitTime : twoHoursAfterNotification;
       } else {
         timeWindowEnd = new Date(notificationTime);
         timeWindowEnd.setHours(timeWindowEnd.getHours() + 2);

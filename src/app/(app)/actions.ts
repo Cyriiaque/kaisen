@@ -132,7 +132,7 @@ export async function createHabit(_: unknown, formData: FormData) {
   });
 
   if (time && time.trim() !== "") {
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const timezone = "Europe/Paris";
     await prisma.reminder.create({
       data: {
         habitId: createdHabit.id,
@@ -274,7 +274,8 @@ export async function updateHabit(
   });
 
   if (time && time.trim() !== "") {
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    // Même logique que pour la création : on reste cohérent en Europe/Paris
+    const timezone = "Europe/Paris";
     await prisma.reminder.create({
       data: {
         habitId: id,

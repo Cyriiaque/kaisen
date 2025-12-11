@@ -82,8 +82,7 @@ export function NotificationsOverlay({
       const reminderTime = payload.reminderTime as string | undefined;
       const timezone =
         (payload.timezone as string | undefined) ||
-        Intl.DateTimeFormat().resolvedOptions().timeZone ||
-        "UTC";
+        "Europe/Paris";
       
       if (reminderTime) {
         const createdUtc = new Date(notification.createdAt);
