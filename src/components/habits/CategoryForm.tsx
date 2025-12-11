@@ -136,23 +136,28 @@ export function CategoryForm({
               <Label htmlFor="category-name">Nom de la catégorie</Label>
               <Input
                 id="category-name"
+                name="category-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Ex: Santé, Productivité..."
                 className="mt-2"
+                autoComplete="off"
                 required
               />
             </div>
 
             <div>
-              <Label>Couleur</Label>
-              <div className="grid grid-cols-4 gap-3 mt-2">
+              <Label htmlFor="color-purple">Couleur</Label>
+              <div className="grid grid-cols-4 gap-3 mt-2" role="group" aria-label="Couleur">
                 {CATEGORY_COLORS.map((c) => (
                   <button
                     key={c.name}
+                    id={c.name === "purple" ? "color-purple" : undefined}
                     type="button"
                     onClick={() => setColor(c.name)}
                     className="relative"
+                    aria-pressed={color === c.name}
+                    aria-label={`Couleur ${c.label}`}
                   >
                     <div
                       className={`w-full aspect-square rounded-xl ${

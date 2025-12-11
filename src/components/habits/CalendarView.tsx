@@ -235,11 +235,14 @@ export function CalendarView({ habits }: CalendarViewProps) {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            type="text"
+            id="search-habits-calendar"
+            name="search-habits-calendar"
+            type="search"
             placeholder="Rechercher une habitude..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 bg-card border-border rounded-xl h-10 text-sm"
+            autoComplete="off"
           />
         </div>
       </motion.div>

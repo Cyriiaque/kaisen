@@ -76,11 +76,23 @@ export async function GET(request: NextRequest) {
         isActiveToday = true;
       }
 
-      if (habit.startDate && new Date(habit.startDate) > today) {
-        continue;
+      const todayDateOnly = new Date(today);
+      todayDateOnly.setHours(0, 0, 0, 0);
+      
+      if (habit.startDate) {
+        const startDateOnly = new Date(habit.startDate);
+        startDateOnly.setHours(0, 0, 0, 0);
+        if (startDateOnly > todayDateOnly) {
+          continue;
+        }
       }
-      if (habit.endDate && new Date(habit.endDate) < today) {
-        continue;
+      
+      if (habit.endDate) {
+        const endDateOnly = new Date(habit.endDate);
+        endDateOnly.setHours(23, 59, 59, 999);
+        if (endDateOnly < todayDateOnly) {
+          continue;
+        }
       }
 
       const isCompletedToday = habit.logs.some((log) => log.done);

@@ -86,11 +86,13 @@ export function AuthScreen({ onLogin, isDark }: AuthScreenProps) {
                 <Label htmlFor="name">Nom</Label>
                 <Input
                   id="name"
+                  name="name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Votre nom"
                   className="mt-1"
+                  autoComplete="name"
                 />
               </motion.div>
             )}
@@ -99,11 +101,13 @@ export function AuthScreen({ onLogin, isDark }: AuthScreenProps) {
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
+                name="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="votre@email.com"
                 className="mt-1"
+                autoComplete="email"
                 required
               />
             </div>
@@ -112,11 +116,13 @@ export function AuthScreen({ onLogin, isDark }: AuthScreenProps) {
               <Label htmlFor="password">Mot de passe</Label>
               <Input
                 id="password"
+                name="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 className="mt-1"
+                autoComplete={isLogin ? "current-password" : "new-password"}
                 required
               />
             </div>

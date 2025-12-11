@@ -261,10 +261,12 @@ export function HabitForm({
             <Label htmlFor="name">Nom de l&apos;habitude *</Label>
             <Input
               id="name"
+              name="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ex: Méditer 10 minutes"
               className="mt-2"
+              autoComplete="off"
               required
             />
           </div>
@@ -273,18 +275,20 @@ export function HabitForm({
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
+              name="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Ajouter une description..."
               className="mt-2 resize-none"
               rows={3}
+              autoComplete="off"
             />
           </div>
 
           <div>
             <Label htmlFor="category">Catégorie *</Label>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="mt-2">
+            <Select value={category} onValueChange={setCategory} name="category">
+              <SelectTrigger id="category" name="category" className="mt-2">
                 <SelectValue>
                   {(() => {
                     const selectedCat = normalizedCategories.find(
@@ -327,10 +331,12 @@ export function HabitForm({
             <Label htmlFor="time">Heure</Label>
             <Input
               id="time"
+              name="time"
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
               className="mt-2 dark:[&::-webkit-calendar-picker-indicator]:invert dark:[&::-webkit-time-picker-indicator]:invert"
+              autoComplete="off"
             />
           </div>
 
@@ -339,6 +345,7 @@ export function HabitForm({
             <div className="flex items-center gap-2 mt-2">
               <Input
                 id="duration"
+                name="duration"
                 type="number"
                 min="0"
                 step="1"
@@ -356,6 +363,7 @@ export function HabitForm({
                 }}
                 placeholder="Ex: 10"
                 className="flex-1 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                autoComplete="off"
               />
               <span className="text-sm text-muted-foreground whitespace-nowrap">
                 minutes
@@ -372,6 +380,7 @@ export function HabitForm({
             </div>
             <Switch
               id="notifications"
+              name="notifications"
               checked={notificationsEnabled}
               onCheckedChange={setNotificationsEnabled}
             />
@@ -382,30 +391,35 @@ export function HabitForm({
               <Label htmlFor="startDate">Date de début *</Label>
               <Input
                 id="startDate"
+                name="startDate"
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 max={endDate || undefined}
                 className="mt-2 dark:[&::-webkit-calendar-picker-indicator]:invert"
+                autoComplete="off"
               />
             </div>
             <div>
               <Label htmlFor="endDate">Date de fin</Label>
               <Input
                 id="endDate"
+                name="endDate"
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 min={startDate || undefined}
                 className="mt-2 dark:[&::-webkit-calendar-picker-indicator]:invert"
+                autoComplete="off"
               />
             </div>
           </div>
 
           <div>
-            <Label>Fréquence *</Label>
-            <div className="grid grid-cols-3 gap-2 mt-2">
+            <Label htmlFor="frequency-daily">Fréquence *</Label>
+            <div className="grid grid-cols-3 gap-2 mt-2" role="group" aria-label="Fréquence">
               <button
+                id="frequency-daily"
                 type="button"
                 onClick={() => setFrequency("daily")}
                 className={`py-3 rounded-xl transition-all ${
@@ -417,6 +431,7 @@ export function HabitForm({
                 Quotidien
               </button>
               <button
+                id="frequency-weekly"
                 type="button"
                 onClick={() => setFrequency("weekly")}
                 className={`py-3 rounded-xl transition-all ${
@@ -428,6 +443,7 @@ export function HabitForm({
                 Hebdo
               </button>
               <button
+                id="frequency-custom"
                 type="button"
                 onClick={() => setFrequency("custom")}
                 className={`py-3 rounded-xl transition-all ${
@@ -446,13 +462,14 @@ export function HabitForm({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
             >
-              <Label>Jours actifs *</Label>
-              <div className="grid grid-cols-7 gap-2 mt-2">
+              <Label htmlFor="active-days-0">Jours actifs *</Label>
+              <div className="grid grid-cols-7 gap-2 mt-2" role="group" aria-label="Jours actifs">
                 {DAYS.map((day, index) => {
                   const isActive = activeDays.includes(index);
                   return (
                     <button
                       key={day.full}
+                      id={index === 0 ? "active-days-0" : undefined}
                       type="button"
                       onClick={() => toggleDay(index)}
                       className={`flex flex-col items-center justify-center py-2 rounded-xl text-xs ${
@@ -461,6 +478,7 @@ export function HabitForm({
                           : "bg-muted text-muted-foreground"
                       }`}
                       title={day.full}
+                      aria-pressed={isActive}
                     >
                       {day.short}
                     </button>
