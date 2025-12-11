@@ -79,24 +79,53 @@ export function NotificationsOverlay({
     
     if (notification.type === "reminder") {
       const habitName = payload.habitName || "une habitude";
-      const reminderTime = payload.reminderTime;
+      const reminderTime = payload.reminderTime as string | undefined;
+      const timezone =
+        (payload.timezone as string | undefined) ||
+        Intl.DateTimeFormat().resolvedOptions().timeZone ||
+        "UTC";
       
       if (reminderTime) {
-        const notificationDate = new Date(notification.createdAt);
-        const [hours, minutes] = reminderTime.split(":").map(Number);
-        
-        const habitDateTime = new Date(notificationDate);
-        habitDateTime.setHours(hours, minutes, 0, 0);
-        
-        if (habitDateTime < notificationDate) {
-          habitDateTime.setDate(habitDateTime.getDate() + 1);
+        const createdUtc = new Date(notification.createdAt);
+
+        const formatter = new Intl.DateTimeFormat("en-CA", {
+          timeZone: timezone,
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        });
+
+        const parts = formatter.formatToParts(createdUtc);
+        const getPart = (type: string) =>
+          parseInt(parts.find((p) => p.type === type)?.value || "0", 10);
+
+        const year = getPart("year");
+        const month = getPart("month");
+        const day = getPart("day");
+        const hour = getPart("hour");
+        const minute = getPart("minute");
+
+        const createdLocal = new Date(
+          Date.UTC(year, month - 1, day, hour, minute, 0, 0)
+        );
+
+        const [remHours, remMinutes] = reminderTime.split(":").map(Number);
+        let reminderLocal = new Date(
+          Date.UTC(year, month - 1, day, remHours, remMinutes, 0, 0)
+        );
+
+        if (reminderLocal <= createdLocal) {
+          reminderLocal.setUTCDate(reminderLocal.getUTCDate() + 1);
         }
-        
-        const diffMs = habitDateTime.getTime() - notificationDate.getTime();
+
+        const diffMs = reminderLocal.getTime() - createdLocal.getTime();
         const diffMinutes = Math.ceil(diffMs / (1000 * 60));
-        
+
         let timeText = "";
-        if (diffMinutes < 1) {
+        if (diffMinutes <= 0) {
           timeText = "maintenant";
         } else if (diffMinutes < 60) {
           timeText = `dans ${diffMinutes} minute${diffMinutes > 1 ? "s" : ""}`;
@@ -106,7 +135,7 @@ export function NotificationsOverlay({
           if (mins === 0) {
             timeText = `dans ${hours} heure${hours > 1 ? "s" : ""}`;
           } else {
-            timeText = `dans ${hours}h${mins}`;
+            timeText = `dans ${hours}h${mins.toString().padStart(2, "0")}`;
           }
         }
         

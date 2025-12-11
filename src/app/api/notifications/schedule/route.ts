@@ -126,6 +126,7 @@ export async function GET(request: NextRequest) {
       const isWithinTimeWindow = nowTime <= timeWindowEnd && nowTime >= notificationTime;
 
       if (isNotificationTimePassed && isSameDay && isWithinTimeWindow) {
+        const reminder = habit.reminders[0];
         await prisma.notification.create({
           data: {
             userId: habit.userId,
@@ -133,7 +134,8 @@ export async function GET(request: NextRequest) {
             payload: JSON.stringify({
               habitId: habit.id,
               habitName: habit.name,
-              reminderTime: reminderTime,
+              reminderTime,
+              timezone: reminder?.timezone,
             }),
             read: false,
           },
