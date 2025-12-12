@@ -1,47 +1,102 @@
-## Environment setup
+# Kaisen - Suivi d'Habitudes
 
-Create a `.env` file in the project root based on this template:
+Application mobile-first de suivi d'habitudes. Permet de créer, suivre et améliorer vos habitudes au quotidien.
 
-```env
-# Prisma with PostgreSQL
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DBNAME?schema=public"
-DIRECT_URL="postgresql://USER:PASSWORD@HOST:5432/DBNAME?schema=public"
-```
+## Fonctionnalités
 
-Then run:
+### Pages principales
 
-```bash
-pnpm db:generate
-pnpm db:migrate
-```
+#### 1. **Dashboard (Accueil)** - `/`
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+- Vue d'ensemble de toutes vos habitudes
+- Affichage des streaks (séries de jours consécutifs)
+- Compteur de notifications non lues
+- Filtrage et recherche d'habitudes
+- Toggle rapide pour marquer une habitude comme complétée
 
-## Getting Started
+#### 2. **Gestion des Habitudes** - `/habits`
 
-First, run the development server:
+- Création, modification et suppression d'habitudes
+- Configuration de la fréquence :
+  - **Quotidienne** : tous les jours
+  - **Hebdomadaire** : une fois par semaine
+  - **Personnalisée** : jours spécifiques de la semaine
+- Définition de dates de début et de fin
+- Ajout de rappels avec heure et fuseau horaire
+- Activation/désactivation des notifications
+- Organisation par catégories
 
-```bash
-pnpm dev
-```
+#### 3. **Calendrier** - `/calendar`
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Vue calendrier mensuelle
+- Visualisation des habitudes complétées par jour
+- Navigation entre les mois
+- Indicateurs visuels pour les jours avec habitudes complétées
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+#### 4. **Statistiques** - `/stats`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Graphiques de progression
+- Statistiques par période (semaine, mois, année)
+- Taux de complétion
+- Évolution des streaks
 
-## Learn More
+#### 5. **Profil** - `/profile`
 
-To learn more about Next.js, take a look at the following resources:
+- Gestion du profil utilisateur
+- Upload de photo de profil (stockage en base64)
+- Configuration du thème (clair/sombre)
+- Activation/désactivation des notifications globales
+- Modification du nom et de l'email
+- Suppression du compte
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Fonctionnalités avancées
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+#### **Catégories**
 
-## Deploy on Vercel
+- Création de catégories personnalisées
+- Attribution de couleurs aux catégories
+- Organisation des habitudes par catégorie
+- Modification et suppression de catégories
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+#### **Authentification**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Inscription avec email et mot de passe
+- Connexion sécurisée
+- Sessions persistantes (30 jours)
+- Déconnexion
+
+#### **Notifications**
+
+- Notifications de rappel pour les habitudes
+- Planification automatique basée sur :
+  - L'heure de rappel configurée
+  - La fréquence de l'habitude
+  - Les jours actifs (pour les habitudes personnalisées)
+  - Les dates de début/fin
+- Polling automatique toutes les 60 secondes
+- Badge de compteur de notifications non lues
+- Marquage comme lues
+- Suppression de notifications
+
+## Tester les Notifications
+
+Pour créer une habitude avec notifications :
+
+1. Aller sur `/habits`
+2. Créer une nouvelle habitude
+3. Activer "Notifications activées"
+4. Définir une heure de rappel (ex: 14:00)
+5. Sauvegarder
+
+**Important** : Le rappel est envoyé **20 minutes avant** l'heure renseignée. Par exemple, si vous définissez 14:00, la notification sera créée à partir de 13:40.
+
+Le système vérifie automatiquement les notifications toutes les 60 secondes. Les notifications apparaissent dans le badge de notification en haut à droite de l'écran.
+
+## 🛠️ Stack Technique
+
+- **Next.js 15** (App Router) - Framework React
+- **TypeScript** - Typage statique
+- **Prisma** - ORM pour PostgreSQL
+- **Tailwind CSS v4** - Styling
+- **shadcn/ui** - Composants UI
+- **PostgreSQL** - Base de données

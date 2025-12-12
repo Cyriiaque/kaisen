@@ -1,9 +1,6 @@
 "use server";
 
-import { writeFile, mkdir, unlink } from "fs/promises";
-import { join } from "path";
 import { revalidatePath } from "next/cache";
-
 
 export async function uploadAvatar(formData: FormData) {
   const file = formData.get("avatar") as File | null;
@@ -22,23 +19,22 @@ export async function uploadAvatar(formData: FormData) {
   }
 
   try {
-    const uploadsDir = join(process.cwd(), "public", "uploads", "avatars");
-    await mkdir(uploadsDir, { recursive: true });
-
-    const timestamp = Date.now();
-    const randomString = Math.random().toString(36).substring(2, 15);
-    const extension = file.name.split(".").pop() || "jpg";
-    const filename = `${timestamp}-${randomString}.${extension}`;
-    const filepath = join(uploadsDir, filename);
-
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    await writeFile(filepath, buffer);
-
-    const relativePath = `/uploads/avatars/${filename}`;
+    const base64 = buffer.toString("base64");
+    const mimeType = file.type || "image/jpeg";
+    
+    const maxBase64Size = 500 * 1024;
+    if (base64.length > maxBase64Size) {
+      return { 
+        error: "L'image est trop volumineuse. Veuillez utiliser une image plus petite (max ~375KB)" 
+      };
+    }
+    
+    const dataUrl = `data:${mimeType};base64,${base64}`;
 
     revalidatePath("/profile");
-    return { success: true, path: relativePath };
+    return { success: true, path: dataUrl };
   } catch (error) {
     console.error("Erreur lors de l'upload:", error);
     return { error: "Erreur lors de l'upload du fichier" };
@@ -46,29 +42,6 @@ export async function uploadAvatar(formData: FormData) {
 }
 
 export async function deleteAvatar(avatarPath: string | null | undefined) {
-  if (!avatarPath) {
-    return { success: true };
-  }
-
-  if (!avatarPath.startsWith("/uploads/avatars/")) {
-    return { success: true };
-  }
-
-  try {
-    const filename = avatarPath.replace("/uploads/avatars/", "");
-    const filepath = join(process.cwd(), "public", "uploads", "avatars", filename);
-    
-    const { access } = await import("fs/promises");
-    try {
-      await access(filepath);
-      await unlink(filepath);
-    } catch {
-    }
-    
-    return { success: true };
-  } catch (error) {
-    console.error("Erreur lors de la suppression de l'avatar:", error);
-    return { success: true };
-  }
+  return { success: true };
 }
 
