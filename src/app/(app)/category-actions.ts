@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/app/auth-actions";
+import { getCurrentUser } from "@/lib/auth-utils";
 
 const CategorySchema = z.object({
   name: z.string().min(1, "Le nom de la catégorie est requis"),

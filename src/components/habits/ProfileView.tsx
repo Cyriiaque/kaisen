@@ -21,8 +21,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { ImageWithFallback } from "@/components/habits/ImageWithFallback";
-import { logoutAction, deleteAccount, updateProfile } from "@/app/auth-actions";
-import { uploadAvatar } from "@/app/upload-actions";
+import { logoutAction, deleteAccount, updateProfile } from "@/app/(auth)/actions";
+import { uploadAvatar } from "@/app/(app)/upload-actions";
 
 interface ProfileViewProps {
   user: {

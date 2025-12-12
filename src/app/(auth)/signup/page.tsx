@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/habits/Logo";
-import { registerAction } from "@/app/auth-actions";
+import { registerAction } from "@/app/(auth)/actions";
 
 export default function SignupPage() {
   const [state, formAction, pending] = useActionState(registerAction, null);

@@ -7,9 +7,8 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
-import { uploadAvatar, deleteAvatar } from "@/app/upload-actions";
-
-const SESSION_COOKIE_NAME = "kaisen_session";
+import { getCurrentUser, createSession, getSessionCookieName } from "@/lib/auth-utils";
+import { uploadAvatar, deleteAvatar } from "@/app/(app)/upload-actions";
 
 const signupSchema = z.object({
   name: z.string().trim().min(1),
@@ -21,62 +20,6 @@ const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
 });
-
-async function createSession(userId: string) {
-  const token = crypto.randomUUID();
-  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30); // 30 jours
-
-  // On supprime les anciennes sessions de cet utilisateur pour simplifier
-  await prisma.session.deleteMany({ where: { userId } });
-
-  await prisma.session.create({
-    data: {
-      token,
-      userId,
-      expiresAt,
-    },
-  });
-
-  const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE_NAME, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    expires: expiresAt,
-  });
-}
-
-export async function getCurrentUser() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
-  if (!token) return null;
-
-  const session = await prisma.session.findUnique({
-    where: { token },
-    include: { user: true },
-  });
-
-  if (!session) {
-    return null;
-  }
-
-  if (session.expiresAt < new Date()) {
-    // Session expirée: nettoyage
-    await prisma.session.delete({ where: { id: session.id } });
-    cookieStore.delete(SESSION_COOKIE_NAME);
-    return null;
-  }
-
-  return {
-    id: session.user.id,
-    email: session.user.email,
-    name: session.user.name,
-    avatar: session.user.avatar,
-    theme: session.user.theme || "light",
-    notificationsEnabled: session.user.notificationsEnabled ?? true,
-  };
-}
 
 export async function registerAction(_: unknown, formData: FormData) {
   const parsed = signupSchema.safeParse({
@@ -124,11 +67,11 @@ export async function loginAction(_: unknown, formData: FormData) {
 
 export async function logoutAction() {
   const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  const token = cookieStore.get(getSessionCookieName())?.value;
 
   if (token) {
     await prisma.session.deleteMany({ where: { token } });
-    cookieStore.delete(SESSION_COOKIE_NAME);
+    cookieStore.delete(getSessionCookieName());
   }
 
   redirect("/login");
@@ -154,7 +97,6 @@ export async function deleteAccount(_: unknown, formData: FormData) {
 
   const { password } = parsed.data;
 
-  // Récupérer l'utilisateur avec le mot de passe hashé
   const userWithPassword = await prisma.user.findUnique({
     where: { id: user.id },
     select: { id: true, passwordHash: true },
@@ -164,18 +106,15 @@ export async function deleteAccount(_: unknown, formData: FormData) {
     return { error: "Utilisateur introuvable" };
   }
 
-  // Vérifier le mot de passe
   const valid = await bcrypt.compare(password, userWithPassword.passwordHash);
   if (!valid) {
     return { error: "Mot de passe incorrect" };
   }
 
-  // Supprimer toutes les sessions de l'utilisateur
   const cookieStore = await cookies();
   await prisma.session.deleteMany({ where: { userId: user.id } });
-  cookieStore.delete(SESSION_COOKIE_NAME);
+  cookieStore.delete(getSessionCookieName());
 
-  // Supprimer l'utilisateur (cascade supprimera automatiquement habitudes, logs, relations, etc.)
   await prisma.user.delete({
     where: { id: user.id },
   });
@@ -198,14 +137,11 @@ export async function updateProfile(_: unknown, formData: FormData) {
     return { error: "Non authentifié" };
   }
 
-  // Vérifier s'il y a un fichier avatar à uploader
   const avatarFile = formData.get("avatarFile") as File | null;
   let avatarPath = formData.get("avatar")?.toString() ?? "";
   const oldAvatarPath = user.avatar;
 
-  // Si un fichier est fourni, l'uploader
   if (avatarFile && avatarFile.size > 0) {
-    // Supprimer l'ancien fichier si il existe
     if (oldAvatarPath) {
       await deleteAvatar(oldAvatarPath);
     }
@@ -243,14 +179,11 @@ export async function updateProfile(_: unknown, formData: FormData) {
 
   const { name, email, avatar, theme, notificationsEnabled } = parsed.data;
 
-  // Vérifier si l'email est déjà utilisé par un autre utilisateur
   if (email !== user.email) {
-    // Vérifier que le mot de passe est fourni si l'email change
     if (!password || password === "") {
       return { error: "Le mot de passe est requis pour changer l'email" };
     }
 
-    // Vérifier le mot de passe
     const userWithPassword = await prisma.user.findUnique({
       where: { id: user.id },
       select: { id: true, passwordHash: true },
@@ -265,19 +198,16 @@ export async function updateProfile(_: unknown, formData: FormData) {
       return { error: "Mot de passe incorrect" };
     }
 
-    // Vérifier si le nouvel email est déjà utilisé
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
       return { error: "Cet email est déjà utilisé" };
     }
   }
 
-  // Si l'avatar est supprimé (chaîne vide ou null) et qu'il y avait un ancien fichier, le supprimer
   if ((!avatar || avatar === "") && oldAvatarPath && oldAvatarPath !== avatarPath) {
     await deleteAvatar(oldAvatarPath);
   }
 
-  // Mettre à jour le profil
   await prisma.user.update({
     where: { id: user.id },
     data: {

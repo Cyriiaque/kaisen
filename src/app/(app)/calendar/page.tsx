@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/app/auth-actions";
+import { getCurrentUser } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { CalendarView } from "@/components/habits/CalendarView";
 import { getTodayInFranceISO } from "@/lib/utils";

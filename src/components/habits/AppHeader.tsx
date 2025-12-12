@@ -1,16 +1,47 @@
 "use client";
 
 import { Logo } from "@/components/habits/Logo";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, useCallback } from "react";
 import { Bell } from "lucide-react";
 import { NotificationsOverlay } from "@/components/habits/NotificationsOverlay";
-import { getUnreadNotificationsCount } from "@/app/(app)/notification-actions";
+import { getUnreadNotificationsCount, tickNotifications } from "@/app/(app)/notification-actions";
 
 export function AppHeader() {
   const [isDark, setIsDark] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isPending, startTransition] = useTransition();
+
+  const loadUnreadCount = useCallback(() => {
+    startTransition(async () => {
+      try {
+        const result = await getUnreadNotificationsCount();
+        if (result.count !== undefined) {
+          setUnreadCount(result.count);
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement du compteur:", error);
+      }
+    });
+  }, [startTransition]);
+
+  const tickNotificationsHandler = useCallback(async () => {
+    startTransition(async () => {
+      try {
+        const result = await tickNotifications();
+        if ("error" in result) {
+          loadUnreadCount();
+          return;
+        }
+        if (result.unreadCount !== undefined) {
+          setUnreadCount(result.unreadCount);
+        }
+      } catch (error) {
+        console.error("[AppHeader] Erreur lors du tick:", error);
+        loadUnreadCount();
+      }
+    });
+  }, [startTransition, loadUnreadCount]);
 
   useEffect(() => {
     const checkTheme = () => {
@@ -33,51 +64,15 @@ export function AppHeader() {
   }, []);
 
   useEffect(() => {
-    tickNotifications();
+    tickNotificationsHandler();
 
-    const interval = setInterval(tickNotifications, 60000);
+    const interval = setInterval(() => {
+      tickNotificationsHandler();
+    }, 60000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [tickNotificationsHandler]);
 
-  const tickNotifications = async () => {
-    try {
-      const response = await fetch("/api/notifications", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.unreadCount !== undefined) {
-          setUnreadCount(data.unreadCount);
-        }
-        if (data.notificationsCreated > 0) {
-          console.log("[AppHeader] Notifications créées:", data.notificationsCreated);
-        }
-      } else {
-        loadUnreadCount();
-      }
-    } catch (error) {
-      console.error("[AppHeader] Erreur lors du tick:", error);
-      loadUnreadCount();
-    }
-  };
-
-  const loadUnreadCount = () => {
-    startTransition(async () => {
-      try {
-        const result = await getUnreadNotificationsCount();
-        if (result.count !== undefined) {
-          setUnreadCount(result.count);
-        }
-      } catch (error) {
-        console.error("Erreur lors du chargement du compteur:", error);
-      }
-    });
-  };
 
   const handleNotificationsClick = () => {
     setIsNotificationsOpen(true);

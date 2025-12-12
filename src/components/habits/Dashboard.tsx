@@ -9,7 +9,7 @@ import { HabitCard } from "@/components/habits/HabitCard";
 import { HabitForm } from "@/components/habits/HabitForm";
 import type { Habit } from "@/components/habits/types";
 import { Input } from "@/components/ui/input";
-import { toggleHabitLog } from "@/app/(app)/actions";
+import { toggleHabitLog } from "@/app/(app)/habit-actions";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 

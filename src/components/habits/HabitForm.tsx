@@ -22,7 +22,7 @@ import {
   createHabit,
   updateHabit,
   deleteHabit,
-} from "@/app/(app)/actions";
+} from "@/app/(app)/habit-actions";
 
 interface HabitFormProps {
   habit?: Habit;

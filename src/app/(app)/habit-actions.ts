@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/app/auth-actions";
+import { getCurrentUser } from "@/lib/auth-utils";
 
 const HabitSchema = z.object({
   name: z.string().min(1, "Le nom de l'habitude est requis"),
@@ -274,7 +274,6 @@ export async function updateHabit(
   });
 
   if (time && time.trim() !== "") {
-    // Même logique que pour la création : on reste cohérent en Europe/Paris
     const timezone = "Europe/Paris";
     await prisma.reminder.create({
       data: {

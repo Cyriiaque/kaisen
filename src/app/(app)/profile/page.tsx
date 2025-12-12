@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/app/auth-actions";
+import { getCurrentUser } from "@/lib/auth-utils";
 import { ProfileView } from "@/components/habits/ProfileView";
 
 export default async function ProfilePage() {

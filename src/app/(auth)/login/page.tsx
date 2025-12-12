@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/habits/Logo";
-import { loginAction } from "@/app/auth-actions";
+import { loginAction } from "@/app/(auth)/actions";
 import { CheckCircle2 } from "lucide-react";
 
 function DeletedMessage() {
@@ -72,7 +72,6 @@ export default function LoginPage() {
           <DeletedMessage />
         </Suspense>
 
-        {/* Formulaire */}
         <motion.form
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

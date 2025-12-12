@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/app/auth-actions";
+import { getCurrentUser } from "@/lib/auth-utils";
 import { AppHeader } from "@/components/habits/AppHeader";
 import { BottomNav } from "@/components/habits/BottomNav";
 import { ThemeProvider } from "@/components/ThemeProvider";
